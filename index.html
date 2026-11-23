@@ -765,8 +765,13 @@
         // Mientras siga el texto PEGAR_AQUI, la app NO envía nada al servidor
         // (así nunca escribe en el repositorio de producción) y avisa en pantalla.
         // Pasos para completarla: README.md → "Backend propio de este repositorio".
+        //
+        // Proyecto: "ENERSA Materiales · General" (Apps Script propio, build r4).
+        // Verificación: abrir esta URL en el navegador → debe devolver
+        //   "repo_destino": "LEAVERA77/MaterialesNoMatriculadosGeneral"
+        //   "build": "general-2026-11-23-r4"
         // ==========================================
-        const urlGoogle = "PEGAR_AQUI_URL_DEL_APPS_SCRIPT_PROPIO";
+        const urlGoogle = "https://script.google.com/macros/s/AKfycbz0v5CKUnPw1gSlttQUMo58-ftoI6SJlWsu675-djETO6VCOEr1f0RZMKoVvAJqwvigOw/exec";
 
         // URL del backend de PRODUCCIÓN — solo referencia, NO debe usarse acá.
         const URL_PRODUCCION = "https://script.google.com/macros/s/AKfycbwVtmNDuo80dvj1PNVld-FK5oTRsmvP7NWIXpSpq6r9j3sbfKEGpjERCM-LiD_Cgph7/exec";
