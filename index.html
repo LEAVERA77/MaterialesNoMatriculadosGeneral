@@ -3,25 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ENERSA · Gestión de Materiales</title>
+    <title>ENERSA · Materiales · Sector General</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
 
+        /* ==========================================================
+           PALETA PROPIA · Sector General (verde petróleo + jade)
+           Deliberadamente distinta de la del sistema de producción
+           (azul marino), para que no se confundan al mirarlas.
+           ========================================================== */
         :root {
-            --bg-color: #f8fafc;
+            --bg-color: #f4f7f5;
             --surface-color: #ffffff;
-            --text-main: #1e293b;
-            --text-muted: #64748b;
-            --border-color: #e2e8f0;
-            --primary-color: #0f172a;
-            --primary-hover: #1e293b;
-            --accent-color: #3b82f6;
-            --success-color: #10b981;
-            --warning-color: #f59e0b;
-            --danger-color: #ef4444;
+            --text-main: #14251f;
+            --text-muted: #5b6b64;
+            --border-color: #dce6e0;
+            --primary-color: #0b3b2e;
+            --primary-hover: #12523e;
+            --accent-color: #0f9d76;
+            --success-color: #15803d;
+            --warning-color: #b45309;
+            --danger-color: #b91c1c;
             --radius-sm: 8px;
             --radius-md: 12px;
             --radius-lg: 20px;
@@ -179,8 +184,8 @@
         .btn-secondary { background: var(--surface-color); color: var(--text-main); border: 1px solid var(--border-color); }
         .btn-secondary:hover { background: var(--bg-color); }
         
-        .btn-info { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
-        .btn-info:hover { background: #dbeafe; }
+        .btn-info { background: #eefaf3; color: #1d4ed8; border: 1px solid #bfe8d5; }
+        .btn-info:hover { background: #d8f2e5; }
         
         .btn-success { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
         .btn-success:hover { background: #d1fae5; }
@@ -321,23 +326,23 @@
             justify-content: space-between;
             gap: 1rem;
             flex-wrap: wrap;
-            background: #eff6ff;
-            border: 1px solid #bfdbfe;
+            background: #eefaf3;
+            border: 1px solid #bfe8d5;
             border-radius: var(--radius-md);
             padding: 0.8rem 1rem;
             margin-bottom: 1.5rem;
         }
-        .session-user { display: flex; align-items: center; gap: 0.65rem; font-size: 0.9rem; font-weight: 600; color: #1e3a8a; }
+        .session-user { display: flex; align-items: center; gap: 0.65rem; font-size: 0.9rem; font-weight: 600; color: #0b3b2e; }
         .session-user i { color: var(--accent-color); font-size: 1.1rem; }
-        .session-sub { display: block; font-weight: 400; font-size: 0.75rem; color: #3b5bab; letter-spacing: 0.01em; }
+        .session-sub { display: block; font-weight: 400; font-size: 0.75rem; color: #15805f; letter-spacing: 0.01em; }
         .session-actions { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
         .device-chip {
             display: inline-flex;
             align-items: center;
             gap: 0.45rem;
             background: var(--surface-color);
-            border: 1px solid #c7d7f5;
-            color: #3730a3;
+            border: 1px solid #bfe8d5;
+            color: #0b3b2e;
             border-radius: 999px;
             padding: 0.35rem 0.75rem;
             font-size: 0.72rem;
@@ -345,7 +350,7 @@
             cursor: pointer;
             transition: background 0.2s;
         }
-        .device-chip:hover { background: #eef2ff; }
+        .device-chip:hover { background: #eefaf3; }
         .device-chip i { font-size: 0.8rem; }
         .btn-sm { padding: 0.4rem 0.7rem; font-size: 0.78rem; border-radius: var(--radius-sm); }
 
@@ -382,10 +387,10 @@
         .login-error { color: var(--danger-color); font-size: 0.82rem; min-height: 1.1em; font-weight: 500; }
         .login-who {
             display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;
-            background: #eff6ff; border: 1px solid #bfdbfe; border-radius: var(--radius-sm);
-            padding: 0.6rem 0.75rem; font-size: 0.85rem; font-weight: 600; color: #1e3a8a;
+            background: #eefaf3; border: 1px solid #bfe8d5; border-radius: var(--radius-sm);
+            padding: 0.6rem 0.75rem; font-size: 0.85rem; font-weight: 600; color: #0b3b2e;
         }
-        .login-who small { font-weight: 400; font-size: 0.72rem; color: #3b5bab; }
+        .login-who small { font-weight: 400; font-size: 0.72rem; color: #15805f; }
         .login-hint { font-size: 0.75rem; color: var(--text-muted); background: var(--bg-color); border: 1px dashed var(--border-color); border-radius: var(--radius-sm); padding: 0.6rem 0.75rem; line-height: 1.45; }
         .login-foot {
             display: flex;
@@ -413,7 +418,7 @@
         .detail-table td:first-child { color: var(--text-muted); width: 42%; }
         .detail-table td:last-child { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; word-break: break-all; }
         .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
-        .stamp-chip { display: inline-block; font-family: ui-monospace, monospace; font-size: 0.68rem; color: #3730a3; background: #eef2ff; border-radius: 4px; padding: 0.1rem 0.35rem; }
+        .stamp-chip { display: inline-block; font-family: ui-monospace, monospace; font-size: 0.68rem; color: #0b3b2e; background: #eefaf3; border-radius: 4px; padding: 0.1rem 0.35rem; }
         .receipt .receipt-dev { font-size: 0.68rem; color: var(--text-muted); text-align: center; line-height: 1.5; display: block; }
         .receipt p.receipt-line { display: flex; justify-content: space-between; gap: 0.75rem; }
         .receipt p.receipt-line strong { text-align: right; }
@@ -429,8 +434,8 @@
     <div class="login-card">
         <div class="login-head">
             <i class="fas fa-box brand"></i>
-            <h2 id="loginTitle">Gestión de Materiales No Matriculados · ENERSA</h2>
-            <p>ENERSA · Identificación de empleado</p>
+            <h2 id="loginTitle">Gestión de Materiales · Sector General</h2>
+            <p>ENERSA · Sector General · Identificación de empleado</p>
         </div>
         <form class="login-body" id="loginForm" autocomplete="off">
 
@@ -464,8 +469,7 @@
                     <i class="fas fa-arrow-left"></i> Usar otro legajo
                 </button>
                 <div class="login-hint">
-                    ¿Olvidaste tu PIN? Pedile a un administrador que te lo restablezca:
-                    <strong>UN ADMINNISTRADOR</strong>.
+                    ¿Olvidaste tu PIN? Pedile a un administrador del sector que te lo restablezca.
                 </div>
             </div>
 
@@ -507,37 +511,63 @@
 
 <!-- Modal Administración de PIN (solo administradores) -->
 <div class="modal-overlay" id="adminModal">
-    <div class="modal-content" style="max-width: 620px;">
+    <div class="modal-content" style="max-width: 780px;">
         <div class="modal-header">
-            <h2><i class="fas fa-user-shield"></i> Administración de PIN</h2>
+            <h2><i class="fas fa-user-shield"></i> Administración de legajos</h2>
             <button type="button" id="closeAdminBtn" aria-label="Cerrar"><i class="fas fa-times"></i></button>
         </div>
         <div class="modal-body">
             <p style="font-size:0.82rem; color:var(--text-muted); margin-bottom:0.5rem;">
-                Solo los administradores pueden restablecer el PIN de un empleado. Al restablecerlo,
-                el empleado vuelve a ingresar con su legajo y define un PIN nuevo.
+                Acá se define <strong>quién puede retirar y devolver materiales</strong> en este sector.
+                El legajo autorizado ingresa con su número y crea su propio PIN en el primer ingreso.
             </p>
-            <p id="adminAlcance" style="font-size:0.78rem; color:#1e3a8a; background:#eff6ff; border:1px solid #bfdbfe; border-radius:var(--radius-sm); padding:0.5rem 0.7rem; margin-bottom:1rem;"></p>
-            <div style="display:flex; gap:0.75rem; flex-wrap:wrap; align-items:flex-end; margin-bottom:1.25rem;">
-                <div class="field-group" style="flex:1 1 200px;">
-                    <label for="adminLegajoInput">Legajo del empleado</label>
+            <p id="adminAlcance" style="font-size:0.78rem; color:#0b3b2e; background:#eefaf3; border:1px solid #bfe8d5; border-radius:var(--radius-sm); padding:0.5rem 0.7rem; margin-bottom:1rem;"></p>
+
+            <!-- Alta / edición de legajo -->
+            <div style="display:flex; gap:0.75rem; flex-wrap:wrap; align-items:flex-end; margin-bottom:0.35rem;">
+                <div class="field-group" style="flex:1 1 140px;">
+                    <label for="adminLegajoInput">Legajo</label>
                     <input type="text" id="adminLegajoInput" inputmode="numeric" placeholder="00000" autocomplete="off">
                 </div>
-                <button type="button" class="btn btn-primary" id="resetPinBtn"><i class="fas fa-key"></i> Restablecer PIN</button>
+                <div class="field-group" style="flex:2 1 260px;">
+                    <label for="adminNombreInput">Apellido y nombre</label>
+                    <input type="text" id="adminNombreInput" placeholder="APELLIDO, NOMBRE" autocomplete="off" style="text-transform:uppercase;">
+                </div>
+                <button type="button" class="btn btn-primary" id="adminGuardarBtn">
+                    <i class="fas fa-floppy-disk"></i> <span id="adminGuardarText">Agregar</span>
+                </button>
+                <button type="button" class="btn btn-secondary" id="adminLimpiarBtn" title="Limpiar el formulario">
+                    <i class="fas fa-eraser"></i>
+                </button>
             </div>
-            <div class="login-error" id="adminMensaje" role="status" style="min-height:1.1em;"></div>
-            <div class="modal-search" style="padding:0.75rem 0; background:transparent; border:none;">
-                <input type="text" id="adminBuscar" placeholder="Buscar empleado por legajo o nombre...">
+            <p style="font-size:0.75rem; color:var(--text-muted); margin:0 0 0.9rem;">
+                Si el legajo ya existe, se actualiza el apellido y nombre. No se toca su PIN.
+            </p>
+
+            <div class="login-error" id="adminMensaje" role="status" style="min-height:1.1em; margin-bottom:0.4rem;"></div>
+
+            <div class="modal-search" style="padding:0.6rem 0; background:transparent; border:none;">
+                <input type="text" id="adminBuscar" placeholder="Buscar por legajo o nombre...">
                 <button type="button" class="btn btn-secondary btn-sm" id="adminRefreshBtn"><i class="fas fa-rotate-right"></i> Actualizar</button>
             </div>
-            <div class="table-responsive" style="max-height:320px; overflow-y:auto;">
+            <div class="table-responsive" style="max-height:340px; overflow-y:auto;">
                 <table class="table-stock" id="adminTable">
                     <thead>
-                        <tr><th>Legajo</th><th>Apellido y nombre</th><th>PIN</th><th></th></tr>
+                        <tr>
+                            <th>Legajo</th>
+                            <th>Apellido y nombre</th>
+                            <th>Estado</th>
+                            <th>PIN</th>
+                            <th style="text-align:right;">Acciones</th>
+                        </tr>
                     </thead>
                     <tbody id="adminTableBody"></tbody>
                 </table>
             </div>
+            <p style="font-size:0.72rem; color:var(--text-muted); margin-top:0.7rem;">
+                Los cambios se aplican en la planilla en 1–2 minutos (Action de GitHub). Usá “Actualizar” para verlos.
+                Dar de baja un legajo no borra su historial: solo le impide operar y crear PIN.
+            </p>
         </div>
         <div class="modal-footer">
             <button type="button" class="btn btn-secondary" id="closeAdminBtn2">Cerrar</button>
@@ -547,8 +577,8 @@
 
 <div class="container">
     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1.5rem; margin-bottom: 2rem;">
-        <h1 style="border: none; margin: 0; padding: 0;"><i class="fas fa-box"></i> Gestión de Materiales</h1>
-        <span style="color: var(--text-muted); font-size: 0.85rem; font-weight: 500;">ENERSA</span>
+        <h1 style="border: none; margin: 0; padding: 0;"><i class="fas fa-box"></i> Gestión de Materiales <span style="font-size:0.8rem; font-weight:700; color:#fff; background:var(--accent-color); border-radius:999px; padding:0.2rem 0.6rem; vertical-align:middle;">GENERAL</span></h1>
+        <span style="color: var(--text-muted); font-size: 0.85rem; font-weight: 700; letter-spacing:0.03em;">ENERSA · SECTOR GENERAL</span>
     </div>
 
     <!-- Barra de sesión: quién opera y desde qué equipo -->
@@ -565,8 +595,8 @@
                 <i class="fas fa-fingerprint"></i>
                 <span id="deviceChipText">—</span>
             </button>
-            <button type="button" class="btn btn-secondary btn-sm" id="adminPinBtn" style="display:none;" title="Restablecer el PIN de un empleado">
-                <i class="fas fa-user-shield"></i> PINs
+            <button type="button" class="btn btn-secondary btn-sm" id="adminPinBtn" style="display:none;" title="Administrar legajos autorizados y PINs">
+                <i class="fas fa-user-shield"></i> Administración
             </button>
             <button type="button" class="btn btn-secondary btn-sm" id="cambiarUsuarioBtn" title="Cerrar sesión e identificarse con otro legajo">
                 <i class="fas fa-arrows-rotate"></i> Cambiar/Cerrar Sesión
@@ -791,8 +821,11 @@
 
         const HORAS_SESION = 12;          // duración de la sesión del empleado
         const MAX_INTENTOS = 5;           // intentos fallidos antes de bloquear 60 s
-        const CLAVE_SESION = 'enersa_sesion_v1';
-        const CLAVE_DEVICE = 'enersa_device_id_v1';
+        // Prefijo propio: leavera77.github.io comparte localStorage entre TODAS las
+        // páginas de ese dominio, así que producción y este sector no deben
+        // pisarse la sesión ni el ID de dispositivo.
+        const CLAVE_SESION = 'general_sesion_v1';
+        const CLAVE_DEVICE = 'general_device_id_v1';
 
         // ==========================================
         // 2. LEGAJOS Y ADMINISTRADORES
@@ -801,46 +834,23 @@
         //    ADMIN_LEGAJOS = únicos que pueden restablecer el PIN de otro.
         // ==========================================
 
-        // Permisos para restablecer el PIN de otro empleado.
-        //   alcance 'todos'  → puede restablecer cualquier PIN (incluidos otros administradores)
-        //   alcance 'excepto'→ puede restablecer, salvo los legajos de "protegidos"
-        // VERA (10246) NO puede tocar el PIN de MAIER (12684) ni de MATEO (16088):
-        // solo MAIER y MATEO pueden restablecer todos los PINs.
+        // Administrador único de este sector: puede restablecer cualquier PIN
+        // y gestionar los legajos autorizados (alta / baja / edición / eliminación).
+        // El PIN se maneja igual que en el sistema de producción: SHA-256 con sal,
+        // y el empleado lo crea en su primer ingreso.
         const ADMIN_PINES = {
-            '12684': { nombre: 'MAIER, FERNANDO',          alcance: 'todos',  protegidos: [] },
-            '16088': { nombre: 'MATEO, LUCAS JUAN MARCOS', alcance: 'todos',  protegidos: [] },
-            '10246': { nombre: 'VERA, LEANDRO FEDERICO',   alcance: 'excepto', protegidos: ['12684', '16088'] }
+            '10246': { nombre: 'VERA, LEANDRO FEDERICO', alcance: 'todos', protegidos: [] }
         };
         const ADMIN_LEGAJOS = Object.keys(ADMIN_PINES);
 
+        // No hay nómina embebida: los legajos autorizados se cargan desde la hoja
+        // "Empleados" del Excel, que administra el legajo 10246 desde el panel.
+        // El administrador queda como llave de entrada para no quedar nunca afuera
+        // si la planilla no se puede leer.
         const LEGAJOS = [
-            // legajo y apellido/nombre. El PIN NO se precarga: lo crea cada empleado.
             { legajo: '10246', nombre: 'VERA, LEANDRO FEDERICO' },
-            { legajo: '11123', nombre: 'ECKERT, ENZO EMANUEL' },
-            { legajo: '11166', nombre: 'OLGIATTI, DUILIO JOAQUIN' },
-            { legajo: '11188', nombre: 'CIARROCA, ENZO SIMON' },
-            { legajo: '11339', nombre: 'CESARIO, LEANDRO IVAN' },
-            { legajo: '11422', nombre: 'CIARROCCA, MANUEL SANTIAGO' },
-            { legajo: '11440', nombre: 'GRILLE, EMILIANO GABRIEL' },
-            { legajo: '12065', nombre: 'NARVAEZ, RAUL JORGE' },
-            { legajo: '12318', nombre: 'VALLE, ROBERTO OMAR' },
-            { legajo: '12320', nombre: 'GOMEZ, ALEJANDRO DAVID' },
-            { legajo: '12322', nombre: 'ALTAMIRANO, RODOLFO HERNAN' },
-            { legajo: '12323', nombre: 'GOMEZ, GERARDO ISIDORO' },
-            { legajo: '12324', nombre: 'RETAMAR, CARLOS HERNAN' },
-            { legajo: '12325', nombre: 'NUÑEZ, HECTOR EDUARDO' },
-            { legajo: '12663', nombre: 'MONZÓN, HUGO CESAR' },
-            { legajo: '12684', nombre: 'MAIER, FERNANDO' },
-            { legajo: '13810', nombre: 'ISAAC, LEANDRO' },
-            { legajo: '13870', nombre: 'GIMENEZ, ROSENDO EMANUEL' },
-            { legajo: '16088', nombre: 'MATEO, LUCAS JUAN MARCOS' },
-            { legajo: '17902', nombre: 'ALBARENQUE, FERNANDO' },
-            { legajo: '18286', nombre: 'MIGNOLA, LUIS GABRIEL' },
-            { legajo: '18287', nombre: 'FERNANDEZ, ARIEL ROBERTO FABIAN' },
-            { legajo: '18288', nombre: 'BATTISTI, ELIAS IMANOL' },
-            { legajo: '18289', nombre: 'VARELA, LUIS ALBERTO' },
-            { legajo: '18406', nombre: 'LARA, DIEGO VALENTIN' },
         ];
+
         let empleados = LEGAJOS.map(e => ({legajo: e.legajo, nombre: e.nombre, activo: true, alta: 'código'}));
 
         let sesion = null;
@@ -1251,7 +1261,7 @@ const MATERIALES_RAW = [
         let empleadoActual = null;
         let cargaEmpleados = null;
 
-        const CLAVE_PIN_PENDIENTE = 'enersa_pin_pendiente_v1';
+        const CLAVE_PIN_PENDIENTE = 'general_pin_pendiente_v1';
 
         function normalizarLegajo(v) {
             return String(v || '').replace(/[^0-9A-Za-z]/g, '').toUpperCase();
@@ -1276,8 +1286,9 @@ const MATERIALES_RAW = [
         }
 
         function motivoNoReset(adminLegajo, legajoObjetivo) {
-            if (!ADMIN_PINES[normalizarLegajo(adminLegajo)]) return 'Tu legajo no está autorizado para restablecer PIN.';
-            return `Solo ${ADMIN_PINES['12684'].nombre} o ${ADMIN_PINES['16088'].nombre} pueden restablecer el PIN del legajo ${normalizarLegajo(legajoObjetivo)}.`;
+            const admin = ADMIN_PINES[normalizarLegajo(adminLegajo)];
+            if (!admin) return 'Tu legajo no está autorizado para restablecer PIN.';
+            return `Tu usuario (${admin.nombre}) no tiene alcance sobre el legajo ${normalizarLegajo(legajoObjetivo)}.`;
         }
 
         // Espera a que la lista de la hoja "Empleados" esté leída antes de validar
@@ -1693,53 +1704,224 @@ const MATERIALES_RAW = [
                 .sort((a, b) => normalizarLegajo(a.legajo).localeCompare(normalizarLegajo(b.legajo)));
 
             const adminActual = sesion ? normalizarLegajo(sesion.legajo) : '';
-            document.getElementById('adminTableBody').innerHTML = lista.map(e => {
+            const celda = document.getElementById('adminTableBody');
+
+            celda.innerHTML = lista.map(e => {
                 const estado = estadoPin(e);
                 const legajoFila = normalizarLegajo(e.legajo);
-                const chip = estado.tipo === 'sin'
+                const activo = e.activo !== false;
+
+                const chipActivo = activo
+                    ? '<span class="stamp-chip" style="background:#ecfdf5;color:#047857;">Activo</span>'
+                    : '<span class="stamp-chip" style="background:#fef2f2;color:#b91c1c;">Inactivo</span>';
+                const chipPin = estado.tipo === 'sin'
                     ? '<span class="stamp-chip" style="background:#fef3c7;color:#92400e;">Sin PIN</span>'
-                    : '<span class="stamp-chip" style="background:#ecfdf5;color:#047857;">PIN activo</span>';
-                const inactivo = e.activo === false ? ' <small style="color:var(--danger-color)">(inactivo)</small>' : '';
-                const esAdminFila = esAdmin(legajoFila) ? ' <span class="stamp-chip" style="background:#eff6ff;color:#1e3a8a;">admin</span>' : '';
+                    : '<span class="stamp-chip" style="background:#eefaf3;color:#0b3b2e;">PIN activo</span>';
+                const etiquetaAdmin = esAdmin(legajoFila)
+                    ? ' <span class="stamp-chip" style="background:#eefaf3;color:#0b3b2e;">admin</span>' : '';
+
                 const permitido = puedeResetearPin(adminActual, legajoFila);
-                const boton = permitido
-                    ? `<button type="button" class="btn btn-secondary btn-sm" data-legajo="${legajoFila}" data-accion="reset">
-                            <i class="fas fa-key"></i> Restablecer
+                const botonPin = permitido
+                    ? `<button type="button" class="btn btn-secondary btn-sm" data-legajo="${legajoFila}" data-accion="reset" title="Restablecer PIN">
+                           <i class="fas fa-key"></i>
                        </button>`
                     : `<button type="button" class="btn btn-secondary btn-sm" disabled data-accion="protegido"
-                            title="${motivoNoReset(adminActual, legajoFila)}" style="opacity:0.55; cursor:not-allowed;">
-                            <i class="fas fa-lock"></i> Protegido
+                           title="${motivoNoReset(adminActual, legajoFila)}" style="opacity:0.55; cursor:not-allowed;">
+                           <i class="fas fa-lock"></i>
                        </button>`;
+
+                const esMismoAdmin = legajoFila === adminActual || esAdmin(legajoFila);
+                const botonEditar = `<button type="button" class="btn btn-secondary btn-sm" data-legajo="${legajoFila}" data-nombre="${String(e.nombre).replace(/"/g, '&quot;')}" data-accion="editar" title="Cargar en el formulario para editar">
+                        <i class="fas fa-pen"></i>
+                    </button>`;
+                const botonEstado = esMismoAdmin
+                    ? ''
+                    : (activo
+                        ? `<button type="button" class="btn btn-secondary btn-sm" data-legajo="${legajoFila}" data-accion="baja" title="Dar de baja (no podrá operar)"><i class="fas fa-user-slash"></i></button>`
+                        : `<button type="button" class="btn btn-secondary btn-sm" data-legajo="${legajoFila}" data-accion="activar" title="Reactivar"><i class="fas fa-user-check"></i></button>`);
+                const botonEliminar = esMismoAdmin
+                    ? ''
+                    : `<button type="button" class="btn btn-secondary btn-sm" data-legajo="${legajoFila}" data-accion="eliminar" title="Eliminar legajo" style="color:var(--danger-color);"><i class="fas fa-trash"></i></button>`;
+
                 return `<tr>
                     <td>${legajoFila}</td>
-                    <td>${e.nombre}${esAdminFila}${inactivo}</td>
-                    <td>${chip}</td>
-                    <td style="text-align:right;">${boton}</td>
+                    <td>${e.nombre}${etiquetaAdmin}</td>
+                    <td>${chipActivo}</td>
+                    <td>${chipPin}</td>
+                    <td style="text-align:right; white-space:nowrap;">${botonEditar}${botonPin}${botonEstado}${botonEliminar}</td>
                 </tr>`;
-            }).join('') || '<tr><td colspan="4" style="text-align:center; color:var(--text-muted);">Sin resultados.</td></tr>';
+            }).join('') || '<tr><td colspan="5" style="text-align:center; color:var(--text-muted);">Sin legajos. Agregá el primero arriba.</td></tr>';
 
-            document.getElementById('adminTableBody').querySelectorAll('button[data-accion="reset"]').forEach(btn => {
-                btn.addEventListener('click', () => restablecerPin(btn.dataset.legajo));
+            celda.querySelectorAll('button[data-accion]').forEach(btn => {
+                const accion = btn.dataset.accion;
+                if (accion === 'protegido') return;
+                btn.addEventListener('click', () => {
+                    const legajo = btn.dataset.legajo;
+                    if (accion === 'reset') return restablecerPin(legajo);
+                    if (accion === 'editar') return cargarEnFormularioAdmin(legajo, btn.dataset.nombre);
+                    if (accion === 'baja') return cambiarEstadoEmpleado(legajo, false);
+                    if (accion === 'activar') return cambiarEstadoEmpleado(legajo, true);
+                    if (accion === 'eliminar') return eliminarEmpleado(legajo);
+                });
             });
         }
 
+        function cargarEnFormularioAdmin(legajo, nombre) {
+            document.getElementById('adminLegajoInput').value = normalizarLegajo(legajo);
+            document.getElementById('adminNombreInput').value = nombre || '';
+            document.getElementById('adminGuardarText').textContent = 'Actualizar';
+            document.getElementById('adminNombreInput').focus();
+            mostrarMensajeAdmin('Editando el legajo ' + normalizarLegajo(legajo) + '. Modificá el nombre y guardá.', false);
+        }
+
+        function limpiarFormularioAdmin() {
+            document.getElementById('adminLegajoInput').value = '';
+            document.getElementById('adminNombreInput').value = '';
+            document.getElementById('adminGuardarText').textContent = 'Agregar';
+            document.getElementById('adminLegajoInput').focus();
+        }
+
+        // Envía una acción de administración de legajos al backend propio.
+        async function enviarAccionEmpleado(payload) {
+            if (!BACKEND_CONFIGURADO) throw new Error('Backend propio sin configurar (ver README).');
+            if (!sesion || !esAdmin(sesion.legajo)) throw new Error('Solo el administrador puede hacer esto.');
+            const resp = await enviarAccionPin(Object.assign({
+                admin_legajo: normalizarLegajo(sesion.legajo),
+                usuario: 'ADMIN · ' + sesion.nombre,
+                operacion: String(payload.accion || '').toUpperCase()
+            }, payload));
+            if (resp.ok === false) throw new Error(resp.motivo || 'El servidor rechazó el pedido.');
+            return resp;
+        }
+
+        async function guardarLegajo() {
+            if (!sesion || !esAdmin(sesion.legajo)) return;
+            const legajo = normalizarLegajo(document.getElementById('adminLegajoInput').value);
+            const nombre = document.getElementById('adminNombreInput').value.trim().toUpperCase().replace(/\s+/g, ' ');
+
+            if (!/^[0-9A-Za-z]{2,12}$/.test(legajo)) {
+                mostrarMensajeAdmin('Legajo inválido: usá entre 2 y 12 caracteres (números).', true);
+                return;
+            }
+            if (nombre.length < 5 || nombre.indexOf(' ') < 0) {
+                mostrarMensajeAdmin('Escribí apellido y nombre completos, por ejemplo: PEREZ, JUAN CARLOS.', true);
+                return;
+            }
+
+            const existente = buscarEmpleado(legajo);
+            mostrarMensajeAdmin('Enviando...', false);
+            document.getElementById('adminGuardarBtn').disabled = true;
+            try {
+                await enviarAccionEmpleado({ accion: 'empleado_alta', legajo: legajo, nombre: nombre });
+
+                if (existente) {
+                    existente.nombre = nombre;
+                    existente.activo = existente.activo !== false;
+                } else {
+                    empleados.push({ legajo: legajo, nombre: nombre, activo: true, alta: 'panel' });
+                }
+                renderAdminTabla(document.getElementById('adminBuscar').value);
+                limpiarFormularioAdmin();
+                mostrarMensajeAdmin(`Pedido enviado: ${nombre} (legajo ${legajo}). Se aplica en la planilla en 1–2 minutos.`, false);
+                showToast('✅ Legajo guardado: ' + legajo);
+                confirmarEnEmpleados(legajo, true,
+                    `✅ Listo: el legajo ${legajo} quedó en la planilla.`,
+                    '⚠ El pedido se envió pero todavía no se sincronizó. Revisá en 1–2 minutos con “Actualizar”.');
+            } catch (e) {
+                mostrarMensajeAdmin(e.message, true);
+            } finally {
+                document.getElementById('adminGuardarBtn').disabled = false;
+            }
+        }
+
+        async function cambiarEstadoEmpleado(legajo, activar) {
+            if (!sesion || !esAdmin(sesion.legajo)) return;
+            const objetivo = normalizarLegajo(legajo);
+            const emp = buscarEmpleado(objetivo);
+            if (!emp) { mostrarMensajeAdmin('No existe el legajo ' + objetivo + '.', true); return; }
+
+            const texto = activar
+                ? `¿Reactivar el legajo ${objetivo} (${emp.nombre})? Va a poder volver a operar.`
+                : `¿Dar de baja el legajo ${objetivo} (${emp.nombre})?\n\nNo va a poder retirar ni devolver materiales ni crear PIN. Su historial se conserva.`;
+            if (!confirm(texto)) return;
+
+            mostrarMensajeAdmin('Enviando...', false);
+            try {
+                await enviarAccionEmpleado({ accion: activar ? 'empleado_activar' : 'empleado_baja', legajo: objetivo });
+                emp.activo = activar;
+                renderAdminTabla(document.getElementById('adminBuscar').value);
+                mostrarMensajeAdmin(`Pedido enviado: legajo ${objetivo} ${activar ? 'reactivado' : 'dado de baja'}. Se aplica en 1–2 minutos.`, false);
+                showToast(activar ? '✅ Legajo reactivado' : '✅ Legajo dado de baja');
+            } catch (e) {
+                mostrarMensajeAdmin(e.message, true);
+            }
+        }
+
+        async function eliminarEmpleado(legajo) {
+            if (!sesion || !esAdmin(sesion.legajo)) return;
+            const objetivo = normalizarLegajo(legajo);
+            const emp = buscarEmpleado(objetivo);
+            if (!emp) { mostrarMensajeAdmin('No existe el legajo ' + objetivo + '.', true); return; }
+            if (esAdmin(objetivo)) { mostrarMensajeAdmin('El legajo del administrador no se puede eliminar.', true); return; }
+
+            if (!confirm(`¿ELIMINAR el legajo ${objetivo} (${emp.nombre}) de la planilla?\n\nEsta acción borra la fila de la hoja Empleados. El historial de movimientos se conserva.\n\nSi solo querés que no opere, usá “Dar de baja”.`)) return;
+
+            mostrarMensajeAdmin('Enviando...', false);
+            try {
+                await enviarAccionEmpleado({ accion: 'empleado_eliminar', legajo: objetivo });
+                empleados = empleados.filter(e => normalizarLegajo(e.legajo) !== objetivo);
+                renderAdminTabla(document.getElementById('adminBuscar').value);
+                mostrarMensajeAdmin(`Pedido enviado: legajo ${objetivo} eliminado. Se aplica en 1–2 minutos.`, false);
+                showToast('✅ Legajo eliminado');
+            } catch (e) {
+                mostrarMensajeAdmin(e.message, true);
+            }
+        }
+
+        // Refresca la lista local desde el Excel (sin perder el admin de respaldo).
+        async function recargarEmpleadosDesdeExcel() {
+            empleados = LEGAJOS.map(e => ({ legajo: e.legajo, nombre: e.nombre, activo: true, alta: 'código' }));
+            cargaEmpleados = cargarEmpleadosDesdeExcel();
+            await cargaEmpleados;
+            return empleados;
+        }
+
+        // Espera a que el cambio aparezca en la planilla (la Action tarda 1-2 min).
+        async function confirmarEnEmpleados(legajo, debeExistir, mensajeOk, mensajeAviso) {
+            const objetivo = normalizarLegajo(legajo);
+            for (let i = 0; i < 8; i++) {
+                await new Promise(r => setTimeout(r, 20000));
+                try {
+                    const lista = await recargarEmpleadosDesdeExcel();
+                    const esta = lista.some(e => normalizarLegajo(e.legajo) === objetivo);
+                    if (esta === debeExistir) {
+                        renderAdminTabla(document.getElementById('adminBuscar').value);
+                        showToast(mensajeOk);
+                        return true;
+                    }
+                } catch (e) { /* reintenta */ }
+            }
+            showToast(mensajeAviso, true);
+            return false;
+        }
+
         async function abrirAdmin() {
-            if (!sesion || !esAdmin(sesion.legajo)) { showToast('Solo los administradores pueden gestionar PIN.', true); return; }
+            if (!sesion || !esAdmin(sesion.legajo)) { showToast('Solo el administrador puede gestionar legajos.', true); return; }
             adminModal.style.display = 'flex';
             mostrarMensajeAdmin('', false);
             const alcance = document.getElementById('adminAlcance');
             const info = ADMIN_PINES[normalizarLegajo(sesion.legajo)];
             alcance.textContent = info && info.alcance === 'todos'
-                ? 'Tu usuario puede restablecer el PIN de cualquier empleado, incluidos los demás administradores.'
-                : 'Tu usuario puede restablecer PINs de empleados, pero NO de MAIER (12684) ni MATEO (16088): esos PINs solo los restablecen ellos.';
-            document.getElementById('adminLegajoInput').value = '';
+                ? 'Administrador: podés dar de alta, editar, dar de baja o eliminar legajos, y restablecer cualquier PIN.'
+                : 'Tu usuario puede restablecer PINs de empleados, con las restricciones configuradas.';
+            limpiarFormularioAdmin();
             document.getElementById('adminBuscar').value = '';
             await listaEmpleados();
             renderAdminTabla('');
         }
 
         async function restablecerPin(legajo) {
-            if (!sesion || !esAdmin(sesion.legajo)) { showToast('Solo los administradores pueden restablecer PIN.', true); return; }
+            if (!sesion || !esAdmin(sesion.legajo)) { showToast('Solo el administrador puede restablecer PIN.', true); return; }
             const objetivo = normalizarLegajo(legajo);
             if (!puedeResetearPin(sesion.legajo, objetivo)) {
                 mostrarMensajeAdmin(motivoNoReset(sesion.legajo, objetivo), true);
@@ -1780,18 +1962,31 @@ const MATERIALES_RAW = [
             }
         }
 
-        document.getElementById('resetPinBtn').addEventListener('click', () => {
-            const legajo = document.getElementById('adminLegajoInput').value;
-            if (!normalizarLegajo(legajo)) { mostrarMensajeAdmin('Ingresá el legajo del empleado.', true); return; }
-            restablecerPin(legajo);
+        // --- Formulario de alta / edición de legajos ---
+        document.getElementById('adminGuardarBtn').addEventListener('click', guardarLegajo);
+        document.getElementById('adminLimpiarBtn').addEventListener('click', limpiarFormularioAdmin);
+
+        // Al escribir un legajo existente, trae el nombre y pasa a modo "Actualizar".
+        document.getElementById('adminLegajoInput').addEventListener('input', () => {
+            const legajo = normalizarLegajo(document.getElementById('adminLegajoInput').value);
+            const emp = legajo ? buscarEmpleado(legajo) : null;
+            const boton = document.getElementById('adminGuardarText');
+            const nombre = document.getElementById('adminNombreInput');
+            if (emp) {
+                boton.textContent = 'Actualizar';
+                if (!nombre.value) nombre.value = emp.nombre;
+            } else {
+                boton.textContent = 'Agregar';
+            }
         });
-        document.getElementById('adminLegajoInput').addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') { e.preventDefault(); document.getElementById('resetPinBtn').click(); }
+        [document.getElementById('adminLegajoInput'), document.getElementById('adminNombreInput')].forEach(el => {
+            el.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') { e.preventDefault(); guardarLegajo(); }
+            });
         });
         document.getElementById('adminBuscar').addEventListener('input', (e) => renderAdminTabla(e.target.value));
         document.getElementById('adminRefreshBtn').addEventListener('click', async () => {
-            cargaEmpleados = cargarEmpleadosDesdeExcel();
-            await cargaEmpleados;
+            await recargarEmpleadosDesdeExcel();
             renderAdminTabla(document.getElementById('adminBuscar').value);
             showToast('Lista actualizada.');
         });
@@ -1910,9 +2105,9 @@ const MATERIALES_RAW = [
                     if (idx >= 0) empleados[idx] = Object.assign({}, empleados[idx], registro);
                     else { empleados.push(registro); sumados++; }
                 }
-                if (sumados > 0) console.info(`[ENERSA] ${sumados} legajo(s) agregados desde la hoja Empleados.`);
+                if (sumados > 0) console.info(`[ENERSA-GENERAL] ${sumados} legajo(s) agregados desde la hoja Empleados.`);
             } catch (e) {
-                console.warn('[ENERSA] No se pudo leer la hoja Empleados, se usa la lista interna.', e.message);
+                console.warn('[ENERSA-GENERAL] No se pudo leer la hoja Empleados, se usa la lista interna.', e.message);
             }
         }
 
@@ -1931,7 +2126,7 @@ const MATERIALES_RAW = [
             });
 
             receiptContent.innerHTML = `
-                <h3>ENERSA</h3>
+                <h3>ENERSA · Sector General</h3>
                 <p class="receipt-line"><span>Fecha:</span> <strong>${fechaHora}</strong></p>
                 <p class="receipt-line"><span>Empleado:</span> <strong>${datos.usuario}</strong></p>
                 <p class="receipt-line"><span>Legajo:</span> <strong>${datos.legajo}</strong></p>
@@ -2360,7 +2555,7 @@ const MATERIALES_RAW = [
             titulo.style.textAlign = 'center';
             titulo.style.marginBottom = '20px';
             titulo.style.fontFamily = 'sans-serif';
-            titulo.innerText = tablaId === 'stockTable' ? 'Reporte de Stock - ENERSA' : 'Reporte de Movimientos - ENERSA';
+            titulo.innerText = tablaId === 'stockTable' ? 'Reporte de Stock - ENERSA Sector General' : 'Reporte de Movimientos - ENERSA Sector General';
             printArea.prepend(titulo);
             document.body.appendChild(printArea);
             window.print();
