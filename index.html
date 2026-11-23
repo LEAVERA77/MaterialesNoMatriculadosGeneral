@@ -749,12 +749,34 @@
         // ==========================================
         // 1. CONFIGURACIÓN
         // ==========================================
+        // Repositorio de ESTA aplicación (backend propio).
+        // OJO: LEAVERA77/MaterialesNoMatriculados es PRODUCCIÓN y no se toca.
         const ghUser = "LEAVERA77";
-        const ghRepo = "MaterialesNoMatriculados";
+        const ghRepo = "MaterialesNoMatriculadosGeneral";
         const ghPath = "listado_materiales_ENERSA.xlsx";
 
-        // URL de Google Apps Script
-        const urlGoogle = "https://script.google.com/macros/s/AKfycbwVtmNDuo80dvj1PNVld-FK5oTRsmvP7NWIXpSpq6r9j3sbfKEGpjERCM-LiD_Cgph7/exec";
+        // ==========================================
+        // BACKEND PROPIO (Google Apps Script de ESTE repositorio)
+        // ------------------------------------------
+        // Esta app ya NO usa el backend de producción. Usa una implementación de
+        // Apps Script propia, cuyo Code.gs (apps-script/Code.gs) despacha la GitHub
+        // Action de ESTE repositorio (LEAVERA77/MaterialesNoMatriculadosGeneral).
+        //
+        // Mientras siga el texto PEGAR_AQUI, la app NO envía nada al servidor
+        // (así nunca escribe en el repositorio de producción) y avisa en pantalla.
+        // Pasos para completarla: README.md → "Backend propio de este repositorio".
+        // ==========================================
+        const urlGoogle = "PEGAR_AQUI_URL_DEL_APPS_SCRIPT_PROPIO";
+
+        // URL del backend de PRODUCCIÓN — solo referencia, NO debe usarse acá.
+        const URL_PRODUCCION = "https://script.google.com/macros/s/AKfycbwVtmNDuo80dvj1PNVld-FK5oTRsmvP7NWIXpSpq6r9j3sbfKEGpjERCM-LiD_Cgph7/exec";
+
+        // true recién cuando la URL del backend propio está cargada y no es la de producción.
+        const BACKEND_CONFIGURADO = /^https:\/\/script\.google\.com\//.test(urlGoogle) && urlGoogle !== URL_PRODUCCION;
+
+        function avisarBackendNoConfigurado() {
+            showToast('Backend propio sin configurar: falta la URL del Apps Script de este repositorio (ver README). No se envió nada.', true);
+        }
 
         // --- Validación de identidad ---
         // false = el PIN se valida en el navegador contra la lista de legajos.
@@ -1320,6 +1342,7 @@ const MATERIALES_RAW = [
 
         // ---- Envío de la acción de PIN al backend (mismo canal que los movimientos) ----
         async function enviarAccionPin(payload) {
+            if (!BACKEND_CONFIGURADO) throw new Error('Backend propio sin configurar (ver README).');
             const cuerpo = Object.assign({ fecha: new Date().toLocaleString('es-AR') }, payload, { dispositivo: datosDispositivo() });
             const res = await fetch(urlGoogle, {
                 method: 'POST',
@@ -1525,7 +1548,7 @@ const MATERIALES_RAW = [
 
         // ---- Validación opcional en el servidor (Apps Script) ----
         async function validarEnServidor(legajo, pin) {
-            if (!USAR_VALIDACION_SERVIDOR) return { soportado: false };
+            if (!USAR_VALIDACION_SERVIDOR || !BACKEND_CONFIGURADO) return { soportado: false };
             try {
                 const ctrl = new AbortController();
                 const timer = setTimeout(() => ctrl.abort(), 8000);
@@ -1964,6 +1987,9 @@ const MATERIALES_RAW = [
             const datos = validateAndCollect();
             if (!datos) return;
 
+            // Sin backend propio configurado no se envía nada (nunca a producción).
+            if (!BACKEND_CONFIGURADO) { avisarBackendNoConfigurado(); return; }
+
             loader.style.display = 'block';
             retiroBtn.disabled = true;
             devolucionBtn.disabled = true;
@@ -2069,6 +2095,7 @@ const MATERIALES_RAW = [
             };
 
             try {
+                if (!BACKEND_CONFIGURADO) { avisarBackendNoConfigurado(); return; }
                 showToast("Procesando devolución rápida...");
                 const res = await fetch(urlGoogle, {
                     method: 'POST',
