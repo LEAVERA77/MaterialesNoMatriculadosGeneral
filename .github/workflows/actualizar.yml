@@ -1,0 +1,40 @@
+name: Actualizar Materiales
+
+on:
+  repository_dispatch:
+    types: [actualizar_stock]
+
+# Evita que dos operaciones simultáneas pisen el Excel
+concurrency:
+  group: actualizar-stock
+  cancel-in-progress: false
+
+jobs:
+  update-excel:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout del repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Instalar dependencias
+        run: pip install openpyxl
+
+      - name: Actualizar Excel
+        env:
+          DATOS: ${{ toJson(github.event.client_payload) }}
+        run: python scripts/actualizar_stock.py
+
+      - name: Commit y Push
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add *.xlsx
+          git diff --cached --quiet || git commit -m "Movimiento: ${{ github.event.client_payload.operacion }} · Legajo ${{ github.event.client_payload.legajo }} · ${{ github.event.client_payload.usuario }}"
+          git push
