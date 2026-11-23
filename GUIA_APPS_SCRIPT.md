@@ -117,12 +117,16 @@ Tenés que ver un texto JSON como este:
 ```json
 {
   "ok": true,
+  "build": "general-2026-11-23-r4",
   "servicio": "ENERSA materiales",
   "entorno": "backend propio",
   "repo_destino": "LEAVERA77/MaterialesNoMatriculadosGeneral",
   "modo_seguro": "ok",
   "token_cargado": true,
-  "planilla_configurada": false
+  "token_detalle": { "largo": 93, "formato": "valido", "pista": "github_pat_1…axPC", "fue_saneado": false },
+  "planilla_configurada": false,
+  "motivo": "",
+  "detalle": ""
 }
 ```
 
@@ -131,8 +135,17 @@ Checklist:
 | Campo | Valor esperado | Si no coincide |
 |---|---|---|
 | `repo_destino` | `LEAVERA77/MaterialesNoMatriculadosGeneral` | Te quedó mal `GH_REPO` → volvé al Paso 4 |
-| `token_cargado` | `true` | Falta pegar el token → Paso 4 y **Nueva versión** (ver nota abajo) |
+| `build` | `general-2026-11-23-r4` | Otro valor o ausente → el `/exec` corre **código viejo** → *Nueva versión* (nota de abajo) |
+| `token_cargado` | `true` | Falta pegar el token → Paso 4 y **Nueva versión** |
+| `token_detalle.largo` | ~93 (`github_pat_…`) o 40 (`ghp_…`) | Si da mucho menos, el token se pegó **incompleto** |
+| `token_detalle.formato` | `"valido"` | `placeholder` = no lo pegaste; `formato_inesperado` = cortado o con basura |
 | `modo_seguro` | `"ok"` | Dice `BLOQUEADO (es producción)` → `GH_REPO` está en producción |
+
+### Atajo: verificar sin salir del editor
+
+En el editor de Apps Script, arriba hay un desplegable con el nombre de la función. Elegí **`verificar`**
+y apretá **▶ Ejecutar**. Abajo, en *Registro de ejecuciones*, aparece el mismo JSON.
+Sirve para revisar la configuración antes de siquiera publicar.
 
 > **Muy importante:** si cambiás el código después de implementar, el cambio **no llega solo** a la URL.
 > Hay que ir a **Implementar → Administrar implementaciones → ✏️ (lápiz) → Versión: Nueva versión → Implementar**.
@@ -193,8 +206,28 @@ Después de probar, si querés dejar el stock como estaba, poné a mano la canti
 | “No se pudo guardar el PIN (falta_token)” | Token vacío o mal pegado | Paso 4 + *Nueva versión* |
 | “No se pudo conectar con el servidor” | URL mal copiada, o el acceso no es “Cualquier persona” | Revisar Paso 5 y la URL |
 | El JSON del Paso 6 no aparece / da error | La implementación no está publicada como *Aplicación web* | Paso 5 otra vez |
+| `token_cargado: true` **y** `detalle: "Falta cargar GH_TOKEN"` a la vez | Es imposible con el código del repo: el `/exec` está corriendo **otra versión** (editada a mano, o un archivo de más en el proyecto) | Ver recuadro de abajo |
+| `build` distinto al esperado | El deploy quedó viejo | *Nueva versión* |
 | El sitio dice “registrado” pero el Excel no cambia | Falla la Action de GitHub | Repo → **Actions** → abrir el run en rojo → **Settings → Actions → General → Workflow permissions: Read and write** |
 | El stock tarda en reflejarse | Caché de `raw.githubusercontent` | Normal: 1–3 min |
+
+---
+
+## Si el diagnóstico se contradice o da raro
+
+Síntoma típico: `"token_cargado": true` y `"detalle": "Falta cargar GH_TOKEN."` en el mismo JSON.
+No puede pasar con el código del repo (las dos cosas salen de la misma variable), así que el `/exec`
+**no está ejecutando este archivo**. Causas, en orden de probabilidad:
+
+1. **El deploy quedó viejo.** Editaste el código pero no creaste la versión:
+   *Implementar → Administrar implementaciones → ✏️ → Versión: **Nueva versión** → Implementar*.
+2. **Hay otro archivo en el proyecto.** En el panel izquierdo *Archivos* tiene que haber **uno solo**
+   (`Código.gs` o `Code.gs`). Si hay dos, el segundo puede redefinir funciones sin avisar:
+   borralo y volvé a pegar el contenido del repo.
+3. **El pegado quedó incompleto** (se cortó a la mitad, o quedó el `function myFunction() {}`).
+   Solución: clic en el editor → `Ctrl+A` → `Supr` → pegar de nuevo → `Ctrl+S`.
+
+El sello `build` del JSON y el `token_detalle` existen justamente para distinguir estos casos de un vistazo.
 
 ---
 

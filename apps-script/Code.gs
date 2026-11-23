@@ -40,8 +40,41 @@ const SPREADSHEET_ID = '';                        // VACÍO = sin respaldo en Sh
 // ------------------------------------------------------------------
 const REPO_PRODUCCION = 'MaterialesNoMatriculados';   // sin el sufijo "General"
 
-/** Devuelve un objeto {ok, motivo} si la configuración es insegura o incompleta. */
-function revisarConfiguracion_() {
+// Sello de versión: permite saber QUÉ código está corriendo el /exec.
+// Si no coincide con el de apps-script/Code.gs del repo, el deploy está viejo.
+const BUILD = 'general-2026-11-23-r4';
+
+/**
+ * Estado del token: UNA sola verificación para todo el archivo (así el
+ * diagnóstico no puede contradecirse) + saneado de lo pegado a mano
+ * (comillas, espacios, saltos de línea, BOM) que es la causa más común
+ * de "falta_token" con el token ya cargado.
+ */
+function estadoToken_() {
+  var bruto = (GH_TOKEN === null || GH_TOKEN === undefined) ? '' : String(GH_TOKEN);
+  var limpio = bruto
+    .replace(/^\uFEFF/, '')        // BOM invisible al inicio
+    .replace(/\s+/g, '')           // espacios y saltos de línea
+    .replace(/["']/g, '');          // comillas pegadas por error
+
+  var esPlaceholder = /^PEGAR_AQUI/.test(limpio);
+  // Un PAT fine-grained ronda los 93 caracteres; uno clásico (ghp_) los 40.
+  // Los largos cortos delatan un pegado incompleto, el error más común.
+  var formatoOk = /^github_pat_[A-Za-z0-9_]{50,}$/.test(limpio) ||
+                  /^ghp_[A-Za-z0-9]{36}$/.test(limpio);
+
+  return {
+    limpio: limpio,
+    ok: !!limpio && !esPlaceholder && formatoOk,
+    largo: limpio.length,
+    pista: limpio ? (limpio.slice(0, 12) + '…' + limpio.slice(-4)) : '',
+    formato: esPlaceholder ? 'placeholder' : (formatoOk ? 'valido' : (limpio ? 'formato_inesperado' : 'vacio')),
+    fue_saneado: (limpio !== bruto)
+  };
+}
+
+/** Devuelve {ok, motivo, detalle} si la configuración es insegura o incompleta. */
+function estadoConfiguracion_() {
   if (!GH_REPO || GH_REPO === REPO_PRODUCCION) {
     return {
       ok: false,
@@ -50,29 +83,56 @@ function revisarConfiguracion_() {
                'Este script es para MaterialesNoMatriculadosGeneral. No se envió nada.'
     };
   }
-  if (!GH_TOKEN || GH_TOKEN.indexOf('PEGAR_AQUI') === 0) {
-    return { ok: false, motivo: 'falta_token', detalle: 'Falta cargar GH_TOKEN.' };
+
+  var tok = estadoToken_();
+  if (!tok.ok) {
+    return {
+      ok: false,
+      motivo: 'falta_token',
+      detalle: 'El token no está usable: estado "' + tok.formato + '", largo ' + tok.largo +
+               ' (un PAT fine-grained ronda los 90 caracteres y empieza con github_pat_).'
+    };
   }
+
   return { ok: true };
 }
 
-/**
- * GET de diagnóstico. Abrí la URL /exec en el navegador para ver a qué
- * repositorio apunta este script (no muestra el token).
- */
-function doGet() {
-  var config = revisarConfiguracion_();
-  return json_({
+/** Diagnóstico completo, sin exponer el token. Lo usan doGet y verificar(). */
+function diagnostico_() {
+  var config = estadoConfiguracion_();
+  var tok = estadoToken_();
+  return {
     ok: config.ok,
+    build: BUILD,
     servicio: 'ENERSA materiales',
     version: '2.0',
     entorno: 'backend propio',
     repo_destino: GH_OWNER + '/' + GH_REPO,
     modo_seguro: (GH_REPO === REPO_PRODUCCION) ? 'BLOQUEADO (es producción)' : 'ok',
-    token_cargado: !!(GH_TOKEN && GH_TOKEN.indexOf('PEGAR_AQUI') !== 0),
+    token_cargado: tok.ok,
+    token_detalle: { largo: tok.largo, formato: tok.formato, pista: tok.pista, fue_saneado: tok.fue_saneado },
     planilla_configurada: !!SPREADSHEET_ID,
+    motivo: config.ok ? '' : config.motivo,
     detalle: config.ok ? '' : config.detalle
-  });
+  };
+}
+
+/**
+ * GET de diagnóstico. Abrí la URL /exec en el navegador para ver a qué
+ * repositorio apunta este script y qué versión de código está corriendo.
+ */
+function doGet() {
+  return json_(diagnostico_());
+}
+
+/**
+ * Ejecutable desde el editor (Implementar no: ▶ Ejecutar con "verificar"
+ * seleccionado). Deja el informe en el registro de ejecuciones.
+ */
+function verificar() {
+  var informe = JSON.stringify(diagnostico_(), null, 2);
+  Logger.log(informe);
+  return informe;
 }
 
 /**
@@ -83,7 +143,7 @@ function doPost(e) {
     var datos = JSON.parse((e && e.postData && e.postData.contents) || '{}');
 
     // --- 0. Modo seguro: nunca disparar el repo de producción ---
-    var config = revisarConfiguracion_();
+    var config = estadoConfiguracion_();
     if (!config.ok) {
       Logger.log('BLOQUEADO: ' + config.detalle);
       return json_({ ok: false, motivo: config.motivo, detalle: config.detalle });
@@ -241,11 +301,15 @@ function dispararGitHub_(datos) {
     };
   }
 
+  // Token saneado: si se pegó con saltos de línea o comillas, el header
+  // Authorization falla con 401 aunque el token sea correcto.
+  var tokenHeader = estadoToken_().limpio;
+
   var res = UrlFetchApp.fetch(url, {
     method: 'post',
     contentType: 'application/json',
     headers: {
-      Authorization: 'Bearer ' + GH_TOKEN,
+      Authorization: 'Bearer ' + tokenHeader,
       Accept: 'application/vnd.github+json'
     },
     payload: JSON.stringify(payload),
