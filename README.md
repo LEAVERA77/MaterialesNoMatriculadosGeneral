@@ -20,12 +20,21 @@ Este repositorio (`LEAVERA77/MaterialesNoMatriculadosGeneral`) tiene **su propio
 | Excel de stock | su `listado_materiales_ENERSA.xlsx` | **su** `listado_materiales_ENERSA.xlsx`, independiente |
 | GitHub Action `actualizar.yml` | la suya | una copia propia (`concurrency` independiente) |
 | Repo destino del `repository_dispatch` (`GH_REPO` en `Code.gs`) | `MaterialesNoMatriculados` | **`MaterialesNoMatriculadosGeneral`** |
-| Apps Script (Web App `/exec`) | proyecto de producción | **proyecto NUEVO y aparte** (URL distinta) |
+| Apps Script (Web App `/exec`) | proyecto de producción | **`ENERSA Materiales · General`** (URL distinta, build `general-2026-11-23-r4`) |
 | Sitio publicado | `leavera77.github.io/MaterialesNoMatriculados/` | `leavera77.github.io/MaterialesNoMatriculadosGeneral/` |
 
 Lo único compartido es la **copia inicial de datos** (legajos, materiales, historial) y las
 reglas de negocio del código. De acá en adelante evolucionan por separado: un movimiento
 hecho en este sitio **solo** modifica el Excel de este repositorio.
+
+### Estado: backend propio OPERATIVO ✅
+
+Verificado de punta a punta el 23/11/2026: sitio → Apps Script propio → GitHub Action → Excel de este repo.
+El `doGet` del deployment devuelve `ok: true`, `repo_destino: LEAVERA77/MaterialesNoMatriculadosGeneral`,
+`build: general-2026-11-23-r4` y token válido. Producción no registró ningún commit.
+
+Para re-verificar en cualquier momento, abrí la URL del Apps Script en el navegador
+y compará el `build` con el de `apps-script/Code.gs`.
 
 ### Qué falta para que el backend propio quede operativo (una sola vez)
 
