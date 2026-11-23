@@ -31,7 +31,49 @@
 const GH_OWNER = 'LEAVERA77';
 const GH_REPO = 'MaterialesNoMatriculadosGeneral';  // backend propio (producción NO se toca)
 const GH_TOKEN = 'PEGAR_AQUI_EL_TOKEN';           // fine-grained PAT con permiso "Contents: Read and write"
-const SPREADSHEET_ID = 'PEGAR_AQUI_EL_ID_DE_LA_PLANILLA'; // opcional (para la validación de login)
+const SPREADSHEET_ID = '';                        // VACÍO = sin respaldo en Sheets. NO poner el de producción.
+
+// ------------------------------------------------------------------
+// MODO SEGURO — red de protección contra tocar producción.
+// Si GH_REPO apunta al repositorio de producción, el script NO ejecuta
+// ninguna acción y devuelve un error explicando el motivo.
+// ------------------------------------------------------------------
+const REPO_PRODUCCION = 'MaterialesNoMatriculados';   // sin el sufijo "General"
+
+/** Devuelve un objeto {ok, motivo} si la configuración es insegura o incompleta. */
+function revisarConfiguracion_() {
+  if (!GH_REPO || GH_REPO === REPO_PRODUCCION) {
+    return {
+      ok: false,
+      motivo: 'modo_seguro',
+      detalle: 'GH_REPO apunta al repositorio de PRODUCCIÓN ("' + GH_REPO + '"). ' +
+               'Este script es para MaterialesNoMatriculadosGeneral. No se envió nada.'
+    };
+  }
+  if (!GH_TOKEN || GH_TOKEN.indexOf('PEGAR_AQUI') === 0) {
+    return { ok: false, motivo: 'falta_token', detalle: 'Falta cargar GH_TOKEN.' };
+  }
+  return { ok: true };
+}
+
+/**
+ * GET de diagnóstico. Abrí la URL /exec en el navegador para ver a qué
+ * repositorio apunta este script (no muestra el token).
+ */
+function doGet() {
+  var config = revisarConfiguracion_();
+  return json_({
+    ok: config.ok,
+    servicio: 'ENERSA materiales',
+    version: '2.0',
+    entorno: 'backend propio',
+    repo_destino: GH_OWNER + '/' + GH_REPO,
+    modo_seguro: (GH_REPO === REPO_PRODUCCION) ? 'BLOQUEADO (es producción)' : 'ok',
+    token_cargado: !!(GH_TOKEN && GH_TOKEN.indexOf('PEGAR_AQUI') !== 0),
+    planilla_configurada: !!SPREADSHEET_ID,
+    detalle: config.ok ? '' : config.detalle
+  });
+}
 
 /**
  * POST de la aplicación.
@@ -39,6 +81,13 @@ const SPREADSHEET_ID = 'PEGAR_AQUI_EL_ID_DE_LA_PLANILLA'; // opcional (para la v
 function doPost(e) {
   try {
     var datos = JSON.parse((e && e.postData && e.postData.contents) || '{}');
+
+    // --- 0. Modo seguro: nunca disparar el repo de producción ---
+    var config = revisarConfiguracion_();
+    if (!config.ok) {
+      Logger.log('BLOQUEADO: ' + config.detalle);
+      return json_({ ok: false, motivo: config.motivo, detalle: config.detalle });
+    }
 
     // --- 1. Validación de identidad (opcional, del lado del servidor) ---
     if (datos.accion === 'login') {
@@ -69,9 +118,6 @@ function doPost(e) {
   }
 }
 
-function doGet() {
-  return json_({ ok: true, servicio: 'ENERSA materiales', version: '2.0' });
-}
 
 /**
  * Valida LEGAJO + PIN contra la hoja "Empleados" (col A legajo, B nombre, C pin o hash, D activo).

@@ -23,7 +23,10 @@ Verificación rápida: pestaña **Actions** → tiene que aparecer el workflow
 
 ---
 
-## 2. Google — Apps Script NUEVO (5 minutos)
+## 2. Google — Apps Script NUEVO (15 minutos)
+
+> 📘 **Guía paso a paso con todos los clics: [`GUIA_APPS_SCRIPT.md`](GUIA_APPS_SCRIPT.md)**.
+> Esta sección es el resumen.
 
 > **No reutilices** el proyecto de Apps Script de producción: si lo editás, producción cambia.
 
@@ -35,15 +38,20 @@ Verificación rápida: pestaña **Actions** → tiene que aparecer el workflow
    ```js
    const GH_OWNER = 'LEAVERA77';
    const GH_REPO  = 'MaterialesNoMatriculadosGeneral';   // ya viene así, no cambiar
-   const GH_TOKEN = '...';           // PAT fine-grained: Contents Read and write
-   const SPREADSHEET_ID = '...';     // opcional (login en servidor / respaldo en Sheets)
+   const GH_TOKEN = '...';   // PAT fine-grained: Contents Read and write
+   const SPREADSHEET_ID = ''; // DEJAR VACÍO: no poner el de producción
    ```
+
+   > El archivo trae **modo seguro**: si `GH_REPO` apunta a `MaterialesNoMatriculados`,
+   > el script no envía nada y responde `motivo: "modo_seguro"`.
 
 3. **Implementar → Nueva implementación → Aplicación web**:
    * *Ejecutar como:* **Yo**
    * *Quién tiene acceso:* **Cualquier persona**
    * **Implementar** y autorizar los permisos que pida.
 4. Copiá la URL que termina en **`/exec`**.
+5. **Verificá:** abrí esa URL en el navegador. El JSON tiene que decir
+   `"repo_destino": "LEAVERA77/MaterialesNoMatriculadosGeneral"` y `"token_cargado": true`.
 
 ### Token para el Apps Script
 

@@ -39,16 +39,24 @@ hecho en este sitio **solo** modifica el Excel de este repositorio.
       const GH_OWNER = 'LEAVERA77';
       const GH_REPO  = 'MaterialesNoMatriculadosGeneral';   // ya viene así
       const GH_TOKEN = '...';        // PAT fine-grained: Contents Read/Write SOLO en este repo
-      const SPREADSHEET_ID = '...';  // opcional (validación de login / respaldo)
+      const SPREADSHEET_ID = '';     // vacío: NO usar la planilla de producción
       ```
    3. **Implementar → Nueva implementación → Aplicación web** → *Ejecutar como* **Yo**,
       *Quién tiene acceso* **Cualquier persona**. Copiá la URL terminada en `/exec`.
+      Dejá `SPREADSHEET_ID = ''` (vacío): **nunca** el ID de la planilla de producción.
+   4. Verificá abriendo la URL en el navegador: el JSON debe devolver
+      `"repo_destino": "LEAVERA77/MaterialesNoMatriculadosGeneral"`.
+
+   📘 Guía con todos los clics: **[`GUIA_APPS_SCRIPT.md`](GUIA_APPS_SCRIPT.md)**.
 4. **Pegar la URL en el HTML**: en `index.html`, reemplazá
    `"PEGAR_AQUI_URL_DEL_APPS_SCRIPT_PROPIO"` por la URL `/exec` del paso 3.
 
 > Mientras el HTML siga con `PEGAR_AQUI...`, la app **no envía nada**: muestra el aviso
 > *"Backend propio sin configurar"*. Es a propósito, para que nunca escriba en producción.
 > La lectura de stock e historial sí funciona, porque lee el Excel de **este** repositorio.
+
+> **Modo seguro (en `Code.gs`):** si `GH_REPO` apunta a `MaterialesNoMatriculados` (producción),
+> el script **no envía nada** y responde `motivo: "modo_seguro"`. El token sin cargar también bloquea.
 
 > El token del Apps Script conviene que tenga acceso **solo** a `MaterialesNoMatriculadosGeneral`.
 > Si también se lo habilita para producción, el aislamiento queda dependiendo de una única
