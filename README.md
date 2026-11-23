@@ -4,6 +4,56 @@ Aplicación web (HTML estático, GitHub Pages) para registrar **retiros** y **de
 
 > **Novedad (v2):** los empleados se identifican **por legajo + PIN** antes de operar, y **cada movimiento queda asociado a la huella del dispositivo** desde el que se hizo.
 
+> **Novedad (v3 · este repositorio):** `MaterialesNoMatriculadosGeneral` tiene **backend propio**.
+> Ya no usa el backend de `LEAVERA77/MaterialesNoMatriculados` (producción), que **no se toca**.
+> Ver **§0**.
+
+---
+
+## 0. Backend propio: este repositorio es independiente de producción
+
+Este repositorio (`LEAVERA77/MaterialesNoMatriculadosGeneral`) tiene **su propio backend** y
+**no comparte nada** con `LEAVERA77/MaterialesNoMatriculados` (producción):
+
+| Pieza | Producción (`MaterialesNoMatriculados`) | Este repo (`MaterialesNoMatriculadosGeneral`) |
+|---|---|---|
+| Excel de stock | su `listado_materiales_ENERSA.xlsx` | **su** `listado_materiales_ENERSA.xlsx`, independiente |
+| GitHub Action `actualizar.yml` | la suya | una copia propia (`concurrency` independiente) |
+| Repo destino del `repository_dispatch` (`GH_REPO` en `Code.gs`) | `MaterialesNoMatriculados` | **`MaterialesNoMatriculadosGeneral`** |
+| Apps Script (Web App `/exec`) | proyecto de producción | **proyecto NUEVO y aparte** (URL distinta) |
+| Sitio publicado | `leavera77.github.io/MaterialesNoMatriculados/` | `leavera77.github.io/MaterialesNoMatriculadosGeneral/` |
+
+Lo único compartido es la **copia inicial de datos** (legajos, materiales, historial) y las
+reglas de negocio del código. De acá en adelante evolucionan por separado: un movimiento
+hecho en este sitio **solo** modifica el Excel de este repositorio.
+
+### Qué falta para que el backend propio quede operativo (una sola vez)
+
+1. **Workflow permissions** — *Settings → Actions → General → Workflow permissions*:
+   **Read and write** (sin esto la Action no puede commitear el Excel de este repo).
+2. **Pages** — *Settings → Pages → Source*: **GitHub Actions**.
+3. **Apps Script nuevo** (no reutilizar el de producción):
+   1. Creá un proyecto **nuevo** en <https://script.google.com>.
+   2. Pegá `apps-script/Code.gs` y completá:
+      ```js
+      const GH_OWNER = 'LEAVERA77';
+      const GH_REPO  = 'MaterialesNoMatriculadosGeneral';   // ya viene así
+      const GH_TOKEN = '...';        // PAT fine-grained: Contents Read/Write SOLO en este repo
+      const SPREADSHEET_ID = '...';  // opcional (validación de login / respaldo)
+      ```
+   3. **Implementar → Nueva implementación → Aplicación web** → *Ejecutar como* **Yo**,
+      *Quién tiene acceso* **Cualquier persona**. Copiá la URL terminada en `/exec`.
+4. **Pegar la URL en el HTML**: en `index.html`, reemplazá
+   `"PEGAR_AQUI_URL_DEL_APPS_SCRIPT_PROPIO"` por la URL `/exec` del paso 3.
+
+> Mientras el HTML siga con `PEGAR_AQUI...`, la app **no envía nada**: muestra el aviso
+> *"Backend propio sin configurar"*. Es a propósito, para que nunca escriba en producción.
+> La lectura de stock e historial sí funciona, porque lee el Excel de **este** repositorio.
+
+> El token del Apps Script conviene que tenga acceso **solo** a `MaterialesNoMatriculadosGeneral`.
+> Si también se lo habilita para producción, el aislamiento queda dependiendo de una única
+> línea (`GH_REPO` en `Code.gs`).
+
 ---
 
 ## 1. Cómo funciona ahora
@@ -77,7 +127,7 @@ Sirve para auditar: *qué equipos operaron, quién los usó por última vez y cu
 
 ## 3. Instalación (3 pasos)
 
-### Paso 1 — Archivos en el repositorio
+### Paso 1 — Archivos en el repositorio (este repo: `MaterialesNoMatriculadosGeneral`)
 
 Subir a la rama `main`:
 
@@ -99,8 +149,8 @@ Abrir el proyecto de Apps Script del Web App, reemplazar el código por `apps-sc
 
 ```js
 const GH_OWNER = 'LEAVERA77';
-const GH_REPO  = 'MaterialesNoMatriculados';
-const GH_TOKEN = '...';        // PAT con "Contents: Read and write" sobre el repo
+const GH_REPO  = 'MaterialesNoMatriculadosGeneral';  // backend propio (producción NO se toca)
+const GH_TOKEN = '...';        // PAT con "Contents: Read and write" SOLO en este repo
 const SPREADSHEET_ID = '...';  // opcional: planilla con la hoja Empleados
 ```
 
@@ -154,7 +204,7 @@ Hoy el PIN se valida en el navegador (rápido y funciona sin conexión). Con el 
 
 | # | Acceso | Para qué | Estado |
 |---|---|---|---|
-| 1 | **Token de GitHub (fine-grained PAT)** con `Contents: Read and write` **solo** en `LEAVERA77/MaterialesNoMatriculados` | Para que pueda subir los cambios al repo (hoy no tengo credenciales) | ⬜ pendiente |
+| 1 | **Token de GitHub (fine-grained PAT)** con `Contents: Read and write` **solo** en `LEAVERA77/MaterialesNoMatriculadosGeneral` | Para que pueda subir los cambios al repo (hoy no tengo credenciales) | ⬜ pendiente |
 | 2 | **GitHub Settings → Actions → General → Workflow permissions**: *Read and write* | Para que la Action pueda commitear el Excel actualizado | ⚠️ verificar |
 | 3 | **GitHub Settings → Pages** → Source: *GitHub Actions* | Para publicar el sitio | ⚠️ verificar |
 | 4 | **Google Apps Script**: `GH_TOKEN` (PAT con `Contents: Read and write`) y permiso de implementación | Para que el script dispare la Action y (opcional) valide el login | ⬜ a completar |
