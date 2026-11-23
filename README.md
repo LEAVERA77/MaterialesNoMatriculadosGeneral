@@ -1,4 +1,4 @@
-# Materiales No Matriculados · ENERSA María Grande
+# Materiales No Matriculados · ENERSA **Sector General**
 
 Aplicación web (HTML estático, GitHub Pages) para registrar **retiros** y **devoluciones** de material y herramientas, con stock actualizado automáticamente en `listado_materiales_ENERSA.xlsx`.
 
@@ -94,7 +94,8 @@ POST al Apps Script  ──►  GitHub Action  ──►  Excel actualizado (sto
 
 ### Legajo + PIN
 
-* El empleado ingresa su **legajo** (lista incluida, 25 empleados) y su **PIN personal**.
+* El empleado ingresa su **legajo** y su **PIN personal**. Los legajos autorizados se administran
+desde el panel de administración (ver §8) y quedan en la hoja `Empleados`.
 * **PIN inicial = los últimos 4 dígitos del legajo** (ej.: legajo `10246` → PIN `0246`).
 * Tras 5 intentos fallidos el acceso se bloquea 60 segundos.
 * Los PIN se guardan como **hash SHA-256** en el código (nunca el número en texto).
@@ -252,3 +253,65 @@ apps-script/Code.gs                 Web App de Google (recibe el POST y dispara 
 * La GitHub Action valida legajo y stock, y escribe las columnas nuevas.
 * Se corrigió `deploy.yml` (fallaba con `npm ci`: el proyecto Next ya no existe).
 * Se eliminó un script de Cloudflare que había quedado pegado al final del HTML y no cumplía ninguna función.
+
+---
+
+## 8. Administración de legajos (legajo 10246)
+
+El sitio no trae ninguna nómina embebida: **quién puede operar se define en la hoja `Empleados`** del Excel.
+Eso se maneja desde el panel del propio sitio, sin tocar el archivo a mano.
+
+### Cómo entrar
+
+1. Identificarse con el legajo **10246 · VERA, LEANDRO FEDERICO**.
+   La primera vez el sistema pide **crear el PIN** (4 a 8 dígitos); después se usa siempre el mismo.
+2. En la barra de sesión aparece el botón **Administración** (solo visible para ese legajo).
+
+### Qué se puede hacer
+
+| Acción | Qué pasa en el Excel |
+|---|---|
+| **Agregar** (legajo + apellido y nombre) | Agrega la fila en `Empleados` con `ACTIVO = SI` y **sin PIN**: el empleado lo crea en su primer ingreso |
+| **Actualizar** (mismo legajo, otro nombre) | Corrige el apellido y nombre; **no toca el PIN** |
+| **Dar de baja** | `ACTIVO = NO`: no puede operar ni crear PIN. Su historial se conserva |
+| **Reactivar** | Vuelve a `ACTIVO = SI` |
+| **Eliminar** | Borra la fila de `Empleados` (el historial de movimientos queda) |
+| **Restablecer PIN** (icono de llave) | Deja el PIN vacío para que la persona defina uno nuevo |
+
+Cada cambio queda auditado en la hoja `Pines` (fecha, acción, legajo, empleado, administrador, dispositivo y huella).
+
+### Reglas que aplica el servidor (no solo la pantalla)
+
+El script de la Action (`scripts/actualizar_stock.py`) vuelve a validar todo:
+
+* Solo los legajos de `ADMIN_PINES` pueden gestionar legajos o restablecer PIN. Hoy: **10246**.
+* Un administrador **no puede darse de baja a sí mismo** ni eliminarse, ni dar de baja/eliminar a otro administrador.
+* El legajo debe tener entre 2 y 12 caracteres alfanuméricos; el alta exige apellido y nombre.
+* Un legajo inactivo no puede crear PIN ni registrar movimientos (el stock no se modifica).
+
+> El PIN se maneja igual que en el sistema de producción: **SHA-256 con sal** (`SAL$HASH`),
+> nunca en texto plano, y se crea en el primer ingreso de cada persona.
+
+### Dónde se cambia el administrador
+
+En dos lugares, que deben coincidir:
+
+1. `index.html` → `const ADMIN_PINES = { '10246': {...} }` (define quién ve el panel).
+2. `scripts/actualizar_stock.py` → `ADMIN_PINES` (define quién puede escribir). **Esta es la que manda.**
+
+---
+
+## 9. Datos heredados de producción
+
+Al separar este repositorio se borraron los datos que pertenecían al sistema de producción:
+
+| Hoja | Estado |
+|---|---|
+| `Historial` | vacía (solo encabezados) |
+| `Empleados` | solo el legajo administrador 10246, sin PIN |
+| `Dispositivos` | vacía |
+| `Pines` | vacía (se va llenando con la auditoría nueva) |
+| `Materiales` | **se conservó la lista** (137 ítems) para reemplazarla por la del sector que corresponda |
+
+Para cargar otro sector: reemplazá `listado_materiales_ENERSA.xlsx` manteniendo las mismas hojas y
+encabezados (`Materiales` con DESCRIPCION / ESPECIFICACION / UNIDAD / CANTIDAD en la fila 2).
