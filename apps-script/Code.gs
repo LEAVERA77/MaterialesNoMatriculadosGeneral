@@ -1,6 +1,13 @@
 /**
  * ENERSA · Gestión de Materiales — Google Apps Script
+ * BACKEND PROPIO de LEAVERA77/MaterialesNoMatriculadosGeneral
  * ------------------------------------------------------------------
+ * IMPORTANTE — Este archivo es el backend de ESTE repositorio.
+ * NO modifica ni depende de LEAVERA77/MaterialesNoMatriculados (producción).
+ *
+ * Usá un proyecto de Apps Script NUEVO (no el de producción), así producción
+ * y este entorno quedan totalmente separados. Cada uno tiene su propia URL /exec.
+ *
  * Reemplaza el contenido de tu proyecto de Apps Script por este archivo.
  *
  * Qué hace:
@@ -22,7 +29,7 @@
  */
 
 const GH_OWNER = 'LEAVERA77';
-const GH_REPO = 'MaterialesNoMatriculados';
+const GH_REPO = 'MaterialesNoMatriculadosGeneral';  // backend propio (producción NO se toca)
 const GH_TOKEN = 'PEGAR_AQUI_EL_TOKEN';           // fine-grained PAT con permiso "Contents: Read and write"
 const SPREADSHEET_ID = 'PEGAR_AQUI_EL_ID_DE_LA_PLANILLA'; // opcional (para la validación de login)
 
