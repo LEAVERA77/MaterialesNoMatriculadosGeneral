@@ -22,8 +22,10 @@ Hoja "Empleados" (PIN autogestionado por el empleado):
 
 Acciones de PIN (llegan con "accion" en el payload):
     pin_establecer  → el propio empleado define su PIN en el primer ingreso
-    pin_resetear    → solo lo pueden pedir los administradores de ADMIN_PINES,
-                      y VERA (10246) nunca puede restablecer el PIN de MAIER ni MATEO
+    pin_resetear    → solo lo puede pedir un administrador de ADMIN_PINES
+
+Acciones de legajos (solo administradores de ADMIN_PINES):
+    empleado_alta | empleado_baja | empleado_activar | empleado_eliminar
 
 Hoja "Pines" (auditoría de altas y restablecimientos):
     A Fecha | B Accion | C Legajo | D Empleado | E Admin | F Dispositivo | G Huella | H Hash (8)
@@ -52,15 +54,14 @@ ENCABEZADO_PINES = [
     "Fecha", "Accion", "Legajo", "Empleado", "Administrador",
     "Dispositivo", "Huella", "Hash (primeros 8)",
 ]
-# Permisos para restablecer el PIN de otro empleado.
-#   "todos"  → puede restablecer cualquier PIN, incluidos otros administradores.
+# Administrador único de este despliegue (Sector General).
+#   "todos"  → puede restablecer cualquier PIN y gestionar legajos.
 #   "excepto"→ puede restablecer, salvo los legajos listados en "protegidos".
-# VERA (10246) no puede tocar el PIN de MAIER (12684) ni de MATEO (16088):
-# solo MAIER y MATEO pueden restablecer todos los PINs.
+# Los legajos de esta lista son los únicos autorizados a:
+#   - restablecer PINs (pin_resetear)
+#   - dar de alta / editar / dar de baja / eliminar legajos (empleado_*)
 ADMIN_PINES = {
-    "12684": {"nombre": "MAIER, FERNANDO", "alcance": "todos", "protegidos": ()},
-    "16088": {"nombre": "MATEO, LUCAS JUAN MARCOS", "alcance": "todos", "protegidos": ()},
-    "10246": {"nombre": "VERA, LEANDRO FEDERICO", "alcance": "excepto", "protegidos": ("12684", "16088")},
+    "10246": {"nombre": "VERA, LEANDRO FEDERICO", "alcance": "todos", "protegidos": ()},
 }
 ADMIN_LEGAJOS = tuple(ADMIN_PINES.keys())
 
@@ -250,7 +251,7 @@ def registrar_dispositivo(wb, datos):
             ws.column_dimensions[get_column_letter(i)].width = 22
         for c in ws[1]:
             c.font = Font(bold=True, color="FFFFFF")
-            c.fill = PatternFill("solid", fgColor="1E3A8A")
+            c.fill = PatternFill("solid", fgColor="0B3B2E")
 
     fila = None
     for r in ws.iter_rows(min_row=2):
@@ -299,7 +300,7 @@ def hoja_empleados(wb):
     for c in ws[1]:
         if c.value:
             c.font = Font(bold=True, color="FFFFFF")
-            c.fill = PatternFill("solid", fgColor="1E3A8A")
+            c.fill = PatternFill("solid", fgColor="0B3B2E")
     return ws
 
 
@@ -319,7 +320,7 @@ def hoja_pines(wb):
         ws.column_dimensions[get_column_letter(i)].width = 20
     for c in ws[1]:
         c.font = Font(bold=True, color="FFFFFF")
-        c.fill = PatternFill("solid", fgColor="1E3A8A")
+        c.fill = PatternFill("solid", fgColor="0B3B2E")
     return ws
 
 
@@ -378,8 +379,8 @@ def resetear_pin(wb, datos):
         fatal("El restablecimiento de PIN no informa el legajo del empleado.")
     if not puede_resetear(admin, legajo):
         fatal(
-            f"El administrador {admin} ({ADMIN_PINES[admin]['nombre']}) NO puede restablecer "
-            f"el PIN del legajo {legajo}: solo 12684 (MAIER) y 16088 (MATEO) pueden hacerlo."
+            f"El administrador {admin} ({ADMIN_PINES[admin]['nombre']}) no tiene alcance "
+            f"para restablecer el PIN del legajo {legajo}."
         )
     if legajo == admin:
         log("  Aviso: el administrador restablece su propio PIN.")
@@ -397,6 +398,78 @@ def resetear_pin(wb, datos):
     log(f"  PIN restablecido por {admin} para {legajo} · {nombre}")
 
 
+# ----------------------------------------------------------------------
+# Gestión de legajos autorizados (solo administradores de ADMIN_LEGAJOS)
+#   empleado_alta      → crea el legajo o actualiza el apellido y nombre
+#   empleado_baja      → ACTIVO = NO (deja de poder operar y de crear PIN)
+#   empleado_activar   → ACTIVO = SI
+#   empleado_eliminar  → borra la fila de la hoja Empleados
+# El PIN nunca se toca acá: se crea con pin_establecer o se limpia con pin_resetear.
+# ----------------------------------------------------------------------
+ACCIONES_EMPLEADO = (
+    "empleado_alta", "empleado_baja", "empleado_activar", "empleado_eliminar",
+)
+
+
+def es_accion_empleado(datos):
+    return str(datos.get("accion", "")).strip().lower() in ACCIONES_EMPLEADO
+
+
+def legajo_valido(legajo):
+    return bool(re.fullmatch(r"[0-9A-Za-z]{2,12}", legajo or ""))
+
+
+def gestionar_empleado(wb, datos):
+    accion = str(datos.get("accion", "")).strip().lower()
+    admin = str(valor(datos, "admin_legajo", "")).strip()
+    legajo = str(valor(datos, "legajo", "")).strip()
+    nombre = str(valor(datos, "nombre", "")).strip().upper()
+    fecha = valor(datos, "fecha", datetime.now().strftime("%Y-%m-%d %H:%M"))
+
+    if admin not in ADMIN_LEGAJOS:
+        fatal(f"El legajo {admin or '(vacío)'} no está autorizado para administrar legajos.")
+    if not legajo_valido(legajo):
+        fatal(f"Legajo inválido: {legajo!r} (se esperan entre 2 y 12 caracteres alfanuméricos).")
+
+    ws = hoja_empleados(wb)
+    fila = fila_empleado(ws, legajo)
+
+    if accion == "empleado_alta":
+        if not nombre:
+            fatal("El alta de legajo necesita el apellido y nombre.")
+        if fila is None:
+            ws.append([legajo, nombre, "", "SI", fecha, f"Alta por {admin}"])
+            log(f"  Legajo {legajo} · {nombre} creado por {admin}")
+        else:
+            anterior = str(fila[1].value or "").strip()
+            fila[1].value = nombre
+            if not str(fila[3].value or "").strip():
+                fila[3].value = "SI"
+            log(f"  Legajo {legajo} actualizado por {admin}: {anterior!r} → {nombre!r}")
+
+    elif accion in ("empleado_baja", "empleado_activar"):
+        if fila is None:
+            fatal(f"El legajo {legajo} no existe en la hoja Empleados.")
+        if legajo == admin and accion == "empleado_baja":
+            fatal("Un administrador no puede darse de baja a sí mismo.")
+        if legajo in ADMIN_LEGAJOS and accion == "empleado_baja":
+            fatal(f"El legajo {legajo} es administrador: no se puede dar de baja.")
+        fila[3].value = "NO" if accion == "empleado_baja" else "SI"
+        nombre = str(fila[1].value or "").strip()   # para que la auditoría lo registre
+        log(f"  Legajo {legajo} → {'INACTIVO' if accion == 'empleado_baja' else 'ACTIVO'} (por {admin})")
+
+    elif accion == "empleado_eliminar":
+        if fila is None:
+            fatal(f"El legajo {legajo} no existe en la hoja Empleados.")
+        if legajo in ADMIN_LEGAJOS:
+            fatal(f"El legajo {legajo} es administrador: no se puede eliminar.")
+        nombre = str(fila[1].value or "").strip()
+        ws.delete_rows(fila[0].row, 1)
+        log(f"  Legajo {legajo} · {nombre} eliminado por {admin}")
+
+    auditar_pin(wb, datos, legajo, nombre, accion, "")
+
+
 def main():
     datos = cargar_datos()
     log("--- DATOS RECIBIDOS ---")
@@ -405,6 +478,14 @@ def main():
 
     if not os.path.exists(ARCHIVO):
         fatal(f"No se encontró {ARCHIVO}")
+
+    # --- Gestión de legajos (no toca el stock ni los PIN) ---
+    if es_accion_empleado(datos):
+        wb = load_workbook(ARCHIVO)
+        gestionar_empleado(wb, datos)
+        wb.save(ARCHIVO)
+        log("Archivo Excel guardado exitosamente (gestión de legajo).")
+        return
 
     # --- Acciones de PIN (no tocan el stock) ---
     if es_accion_pin(datos):

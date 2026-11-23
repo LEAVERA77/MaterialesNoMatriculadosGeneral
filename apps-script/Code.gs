@@ -40,9 +40,12 @@ const SPREADSHEET_ID = '';                        // VACÍO = sin respaldo en Sh
 // ------------------------------------------------------------------
 const REPO_PRODUCCION = 'MaterialesNoMatriculados';   // sin el sufijo "General"
 
+// Acciones de gestión de legajos (las valida el script de la Action).
+const ACCIONES_EMPLEADO = ['empleado_alta', 'empleado_baja', 'empleado_activar', 'empleado_eliminar'];
+
 // Sello de versión: permite saber QUÉ código está corriendo el /exec.
 // Si no coincide con el de apps-script/Code.gs del repo, el deploy está viejo.
-const BUILD = 'general-2026-11-23-r4';
+const BUILD = 'general-2026-11-23-r5';
 
 /**
  * Estado del token: UNA sola verificación para todo el archivo (así el
@@ -159,6 +162,14 @@ function doPost(e) {
       if (!datos.legajo) return json_({ ok: false, motivo: 'falta_legajo' });
       var okPin = dispararGitHub_(datos);
       return json_({ ok: okPin, accion: datos.accion, legajo: datos.legajo });
+    }
+
+    // --- 1c. Gestión de legajos autorizados (solo administradores) ---
+    if (ACCIONES_EMPLEADO.indexOf(datos.accion) >= 0) {
+      if (!datos.legajo) return json_({ ok: false, motivo: 'falta_legajo' });
+      if (!datos.admin_legajo) return json_({ ok: false, motivo: 'falta_admin' });
+      var okEmp = dispararGitHub_(datos);
+      return json_({ ok: okEmp, accion: datos.accion, legajo: datos.legajo });
     }
 
     // --- 2. Movimiento de materiales ---
@@ -278,6 +289,27 @@ function dispararGitHub_(datos) {
       origen: datos.origen || ''          // 8
     }
   };
+
+  // Gestión de legajos: claves propias (8, dentro del límite de 10).
+  if (ACCIONES_EMPLEADO.indexOf(datos.accion) >= 0) {
+    payload.client_payload = {
+      accion: datos.accion,                          // 1
+      admin_legajo: datos.admin_legajo || '',        // 2
+      legajo: datos.legajo || '',                    // 3
+      nombre: datos.nombre || '',                    // 4
+      usuario: datos.usuario || '',                   // 5
+      operacion: datos.operacion || '',               // 6
+      fecha: datos.fecha || new Date().toString(),    // 7
+      dispositivo: (function () {
+        var d = datos.dispositivo || {};
+        return {
+          id: d.id || '', huella: d.huella || '', resumen: d.resumen || '',
+          ua: d.ua || '', pantalla: d.pantalla || '', zona: d.zona || '',
+          timestamp: d.timestamp || ''
+        };
+      })()                                            // 8
+    };
+  }
 
   // Las acciones de PIN usan su propio conjunto de claves (siempre <= 10).
   if (datos.accion === 'pin_establecer' || datos.accion === 'pin_resetear') {
