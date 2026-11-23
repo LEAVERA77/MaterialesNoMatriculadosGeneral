@@ -22,6 +22,7 @@ Este repositorio (`LEAVERA77/MaterialesNoMatriculadosGeneral`) tiene **su propio
 | Repo destino del `repository_dispatch` (`GH_REPO` en `Code.gs`) | `MaterialesNoMatriculados` | **`MaterialesNoMatriculadosGeneral`** |
 | Apps Script (Web App `/exec`) | proyecto de producción | **`ENERSA Materiales · General`** (URL distinta, build `general-2026-11-23-r4`) |
 | Sitio publicado | `leavera77.github.io/MaterialesNoMatriculados/` | `leavera77.github.io/MaterialesNoMatriculadosGeneral/` |
+| Administrador | MAIER / MATEO / VERA | **solo 10246 · VERA, LEANDRO FEDERICO** |
 
 Lo único compartido es la **copia inicial de datos** (legajos, materiales, historial) y las
 reglas de negocio del código. De acá en adelante evolucionan por separado: un movimiento
@@ -291,6 +292,11 @@ El script de la Action (`scripts/actualizar_stock.py`) vuelve a validar todo:
 
 > El PIN se maneja igual que en el sistema de producción: **SHA-256 con sal** (`SAL$HASH`),
 > nunca en texto plano, y se crea en el primer ingreso de cada persona.
+
+> **Si alguien intenta una acción de administración sin serlo:** el Apps Script la reenvía igual,
+> pero el script de la Action la **rechaza** (`El legajo X no está autorizado para administrar legajos`),
+> el run de GitHub queda en rojo y **no se modifica ninguna hoja**. El panel avisa después de
+> 1–2 minutos que el cambio no se sincronizó. Verificado el 23/11/2026.
 
 ### Dónde se cambia el administrador
 
