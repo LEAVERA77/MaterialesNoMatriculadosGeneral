@@ -619,6 +619,7 @@
                     <label for="adminNombreInput">Apellido y nombre</label>
                     <input type="text" id="adminNombreInput" placeholder="APELLIDO, NOMBRE" autocomplete="off" style="text-transform:uppercase;">
                 </div>
+                <label style="display:flex; align-items:center; gap:.45rem; font-size:.82rem; padding:.55rem .2rem;"><input type="checkbox" id="adminRolCheckbox"> Administrador</label>
                 <button type="button" class="btn btn-primary" id="adminGuardarBtn">
                     <i class="fas fa-floppy-disk"></i> <span id="adminGuardarText">Agregar</span>
                 </button>
@@ -1482,6 +1483,7 @@ const MATERIALES_RAW = [
         let pasoActual = 'legajo';
         let empleadoActual = null;
         let cargaEmpleados = null;
+        let rolesAdminCargados = false;
 
         const CLAVE_PIN_PENDIENTE = 'general_pin_pendiente_v1';
 
@@ -1495,15 +1497,20 @@ const MATERIALES_RAW = [
         }
 
         function esAdmin(legajo) {
-            return Object.prototype.hasOwnProperty.call(ADMIN_PINES, normalizarLegajo(legajo));
+            const l = normalizarLegajo(legajo);
+            if (rolesAdminCargados) {
+                const emp = buscarEmpleado(l);
+                return !!(emp && emp.admin && emp.activo !== false);
+            }
+            return Object.prototype.hasOwnProperty.call(ADMIN_PINES, l);
         }
 
         // ¿El administrador puede restablecer el PIN de ese empleado?
         function puedeResetearPin(adminLegajo, legajoObjetivo) {
+            if (!esAdmin(adminLegajo)) return false;
             const admin = ADMIN_PINES[normalizarLegajo(adminLegajo)];
-            if (!admin) return false;
             const objetivo = normalizarLegajo(legajoObjetivo);
-            if (admin.alcance === 'todos') return true;
+            if (!admin || admin.alcance === 'todos') return true;
             return !admin.protegidos.includes(objetivo);
         }
 
@@ -1958,6 +1965,10 @@ const MATERIALES_RAW = [
                     ? ' <span class="stamp-chip" style="background:#eefaf3;color:#0b3b2e;">admin</span>' : '';
 
                 const permitido = puedeResetearPin(adminActual, legajoFila);
+                const botonRol = (esAdmin(legajoFila) && legajoFila !== adminActual)
+                    ? `<button type="button" class="btn btn-secondary btn-sm" data-legajo="${legajoFila}" data-accion="quitar-admin" title="Quitar rol de administrador"><i class="fas fa-user-shield" style="color:#b91c1c;"></i></button>`
+                    : (!esAdmin(legajoFila) ? `<button type="button" class="btn btn-secondary btn-sm" data-legajo="${legajoFila}" data-accion="hacer-admin" title="Hacer administrador"><i class="fas fa-user-shield"></i></button>` : '');
+
                 const botonPin = permitido
                     ? `<button type="button" class="btn btn-secondary btn-sm" data-legajo="${legajoFila}" data-accion="reset" title="Restablecer PIN">
                            <i class="fas fa-key"></i>
@@ -1967,7 +1978,7 @@ const MATERIALES_RAW = [
                            <i class="fas fa-lock"></i>
                        </button>`;
 
-                const esMismoAdmin = legajoFila === adminActual || esAdmin(legajoFila);
+                const esMismoAdmin = esAdmin(legajoFila);
                 const botonEditar = `<button type="button" class="btn btn-secondary btn-sm" data-legajo="${legajoFila}" data-nombre="${String(e.nombre).replace(/"/g, '&quot;')}" data-accion="editar" title="Cargar en el formulario para editar">
                         <i class="fas fa-pen"></i>
                     </button>`;
@@ -1985,7 +1996,7 @@ const MATERIALES_RAW = [
                     <td>${e.nombre}${etiquetaAdmin}</td>
                     <td>${chipActivo}</td>
                     <td>${chipPin}</td>
-                    <td style="text-align:right; white-space:nowrap;">${botonEditar}${botonPin}${botonEstado}${botonEliminar}</td>
+                    <td style="text-align:right; white-space:nowrap;">${botonEditar}${botonPin}${botonRol}${botonEstado}${botonEliminar}</td>
                 </tr>`;
             }).join('') || '<tr><td colspan="5" style="text-align:center; color:var(--text-muted);">Sin legajos. Agregá el primero arriba.</td></tr>';
 
@@ -1995,6 +2006,8 @@ const MATERIALES_RAW = [
                 btn.addEventListener('click', () => {
                     const legajo = btn.dataset.legajo;
                     if (accion === 'reset') return restablecerPin(legajo);
+                    if (accion === 'hacer-admin') return cambiarRolAdmin(legajo, true);
+                    if (accion === 'quitar-admin') return cambiarRolAdmin(legajo, false);
                     if (accion === 'editar') return cargarEnFormularioAdmin(legajo, btn.dataset.nombre);
                     if (accion === 'baja') return cambiarEstadoEmpleado(legajo, false);
                     if (accion === 'activar') return cambiarEstadoEmpleado(legajo, true);
@@ -2006,6 +2019,7 @@ const MATERIALES_RAW = [
         function cargarEnFormularioAdmin(legajo, nombre) {
             document.getElementById('adminLegajoInput').value = normalizarLegajo(legajo);
             document.getElementById('adminNombreInput').value = nombre || '';
+            document.getElementById('adminRolCheckbox').checked = esAdmin(legajo);
             document.getElementById('adminGuardarText').textContent = 'Actualizar';
             document.getElementById('adminNombreInput').focus();
             mostrarMensajeAdmin('Editando el legajo ' + normalizarLegajo(legajo) + '. Modificá el nombre y guardá.', false);
@@ -2014,6 +2028,7 @@ const MATERIALES_RAW = [
         function limpiarFormularioAdmin() {
             document.getElementById('adminLegajoInput').value = '';
             document.getElementById('adminNombreInput').value = '';
+            document.getElementById('adminRolCheckbox').checked = false;
             document.getElementById('adminGuardarText').textContent = 'Agregar';
             document.getElementById('adminLegajoInput').focus();
         }
@@ -2050,13 +2065,22 @@ const MATERIALES_RAW = [
             document.getElementById('adminGuardarBtn').disabled = true;
             try {
                 await enviarAccionEmpleado({ accion: 'empleado_alta', legajo: legajo, nombre: nombre });
+                const adminDeseado = document.getElementById('adminRolCheckbox').checked;
+                if (adminDeseado && !esAdmin(legajo)) {
+                    await enviarAccionEmpleado({ accion: 'empleado_admin_agregar', legajo: legajo });
+                } else if (!adminDeseado && existente && esAdmin(legajo)) {
+                    if (!confirm('¿Quitar el rol de administrador de ' + legajo + '? Debe quedar al menos otro administrador activo.')) return;
+                    await enviarAccionEmpleado({ accion: 'empleado_admin_quitar', legajo: legajo });
+                }
 
                 if (existente) {
                     existente.nombre = nombre;
                     existente.activo = existente.activo !== false;
+                    existente.admin = adminDeseado;
                 } else {
-                    empleados.push({ legajo: legajo, nombre: nombre, activo: true, alta: 'panel' });
+                    empleados.push({ legajo: legajo, nombre: nombre, activo: true, admin: adminDeseado, alta: 'panel' });
                 }
+                if (adminDeseado || (existente && !adminDeseado)) rolesAdminCargados = true;
                 renderAdminTabla(document.getElementById('adminBuscar').value);
                 limpiarFormularioAdmin();
                 mostrarMensajeAdmin(`Pedido enviado: ${nombre} (legajo ${legajo}). Se aplica en la planilla en 1–2 minutos.`, false);
@@ -2069,6 +2093,23 @@ const MATERIALES_RAW = [
             } finally {
                 document.getElementById('adminGuardarBtn').disabled = false;
             }
+        }
+
+
+        async function cambiarRolAdmin(legajo, promover) {
+            const objetivo = normalizarLegajo(legajo), emp = buscarEmpleado(objetivo);
+            if (!emp) return;
+            if (!promover && objetivo === normalizarLegajo(sesion.legajo) && !confirm('¿Quitar TU rol de administrador? Debe quedar al menos otro administrador activo. Perderás acceso a Administración al actualizar la página.')) return;
+            if (!promover && objetivo !== normalizarLegajo(sesion.legajo) && !confirm('¿Quitar el rol de administrador de ' + objetivo + ' (' + emp.nombre + ')? Debe quedar al menos otro administrador activo.')) return;
+            if (promover && !confirm('¿Dar permisos de administrador a ' + objetivo + ' (' + emp.nombre + ')? Tendrá acceso a gestión de legajos, PIN e ingresos.')) return;
+            mostrarMensajeAdmin('Enviando cambio de rol...', false);
+            try {
+                await enviarAccionEmpleado({ accion: promover ? 'empleado_admin_agregar' : 'empleado_admin_quitar', legajo: objetivo });
+                emp.admin = promover; rolesAdminCargados = true;
+                renderAdminTabla(document.getElementById('adminBuscar').value); aplicarSesionUI();
+                mostrarMensajeAdmin('Cambio enviado; se confirmará cuando se publique el Excel (1–2 min).', false);
+                confirmarEnEmpleados(objetivo, true, '✅ Rol de administrador actualizado.', '⚠️ No se pudo confirmar todavía. Actualizá la lista en 1–2 min.');
+            } catch (e) { mostrarMensajeAdmin(e.message, true); }
         }
 
         async function cambiarEstadoEmpleado(legajo, activar) {
@@ -2212,6 +2253,7 @@ const MATERIALES_RAW = [
             if (emp) {
                 boton.textContent = 'Actualizar';
                 if (!nombre.value) nombre.value = emp.nombre;
+                document.getElementById('adminRolCheckbox').checked = esAdmin(legajo);
             } else {
                 boton.textContent = 'Agregar';
             }
@@ -2334,6 +2376,9 @@ const MATERIALES_RAW = [
                 if (!workbook.SheetNames.includes('Empleados')) return;
                 const ws = workbook.Sheets['Empleados'];
                 const json = XLSX.utils.sheet_to_json(ws, { header: 1 });
+                const cabeceras = (json[0] || []).map(x => String(x || '').trim().toUpperCase());
+                const colAdmin = cabeceras.indexOf('ADMINISTRADOR');
+                if (colAdmin >= 0) rolesAdminCargados = true;
                 let sumados = 0;
                 for (let i = 1; i < json.length; i++) {
                     const row = json[i];
@@ -2347,6 +2392,7 @@ const MATERIALES_RAW = [
                         legajo: legajo,
                         nombre: nombre.toUpperCase(),
                         activo: !(activoRaw === 'NO' || activoRaw === 'FALSE' || activoRaw === '0'),
+                        admin: colAdmin >= 0 && ['SI','SÍ','ADMIN','ADMINISTRADOR','TRUE','1'].includes(String(row[colAdmin] || '').trim().toUpperCase()),
                         alta: 'excel'
                     };
                     if (pinRaw) registro.pin = pinRaw;   // "SAL$HASH" | hash viejo | texto plano

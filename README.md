@@ -257,7 +257,7 @@ apps-script/Code.gs                 Web App de Google (recibe el POST y dispara 
 
 ---
 
-## 8. Administración de legajos (legajo 10246)
+## 8. Administración de legajos y administradores
 
 El sitio no trae ninguna nómina embebida: **quién puede operar se define en la hoja `Empleados`** del Excel.
 Eso se maneja desde el panel del propio sitio, sin tocar el archivo a mano.
@@ -266,7 +266,7 @@ Eso se maneja desde el panel del propio sitio, sin tocar el archivo a mano.
 
 1. Identificarse con el legajo **10246 · VERA, LEANDRO FEDERICO**.
    La primera vez el sistema pide **crear el PIN** (4 a 8 dígitos); después se usa siempre el mismo.
-2. En la barra de sesión aparece el botón **Administración** (solo visible para ese legajo).
+2. En la barra de sesión aparece el botón **Administración** (visible para administradores activos).
 
 ### Qué se puede hacer
 
@@ -285,8 +285,9 @@ Cada cambio queda auditado en la hoja `Pines` (fecha, acción, legajo, empleado,
 
 El script de la Action (`scripts/actualizar_stock.py`) vuelve a validar todo:
 
-* Solo los legajos de `ADMIN_PINES` pueden gestionar legajos o restablecer PIN. Hoy: **10246**.
-* Un administrador **no puede darse de baja a sí mismo** ni eliminarse, ni dar de baja/eliminar a otro administrador.
+* Los administradores activos se determinan por la columna `ADMINISTRADOR` de `Empleados`. En el primer cambio de rol se agrega esa columna y se migra el administrador inicial, conservando las demás celdas.
+* Se puede quitar el propio rol y hasta eliminar el propio legajo solo si queda al menos otro administrador activo. El último administrador no se puede quitar ni eliminar.
+* Para dar de baja o eliminar a un administrador, primero hay que quitarle el rol.
 * El legajo debe tener entre 2 y 12 caracteres alfanuméricos; el alta exige apellido y nombre.
 * Un legajo inactivo no puede crear PIN ni registrar movimientos (el stock no se modifica).
 
@@ -298,12 +299,9 @@ El script de la Action (`scripts/actualizar_stock.py`) vuelve a validar todo:
 > el run de GitHub queda en rojo y **no se modifica ninguna hoja**. El panel avisa después de
 > 1–2 minutos que el cambio no se sincronizó. Verificado el 23/11/2026.
 
-### Dónde se cambia el administrador
+### Cómo agregar o quitar administradores
 
-En dos lugares, que deben coincidir:
-
-1. `index.html` → `const ADMIN_PINES = { '10246': {...} }` (define quién ve el panel).
-2. `scripts/actualizar_stock.py` → `ADMIN_PINES` (define quién puede escribir). **Esta es la que manda.**
+En el panel **Administración**, marcá **Administrador** al crear/editar un legajo o usá el botón de rol de la tabla. Para retirarte vos, editá tu legajo y desmarcá el rol; esto solo se permite si ya existe otro administrador activo. Después, si querés borrar también tu legajo, podés eliminarlo desde la tabla. El servidor valida estas reglas y deja auditoría en `Pines`.
 
 ---
 
@@ -324,7 +322,7 @@ encabezados (`Materiales` con DESCRIPCION / ESPECIFICACION / UNIDAD / CANTIDAD e
 
 ---
 
-## 10. Ingreso de materiales (solo legajo 10246)
+## 10. Ingreso de materiales (solo administradores activos)
 
 Ventana nueva para **cargar mercadería que entra al depósito**. Es la única operación que puede
 **sumar cantidades** y **dar de alta materiales nuevos**.

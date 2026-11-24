@@ -222,7 +222,7 @@ def es_ingreso(datos):
             str(datos.get("operacion", "")).strip().lower() == "ingreso")
 
 
-def validar_admin_ingreso(datos):
+def validar_admin_ingreso(datos, wb=None):
     """Solo un legajo de ADMIN_PINES puede cargar mercadería.
 
     Se exige que el legajo que opera (el de la sesión) sea administrador. Si
@@ -235,7 +235,8 @@ def validar_admin_ingreso(datos):
         fatal("Payload inconsistente: el legajo que opera no coincide con el "
               "administrador informado. No se registró nada.")
     quien = actor or admin
-    if quien not in ADMIN_LEGAJOS:
+    autorizado = es_admin_en_wb(wb, quien) if wb is not None else quien in ADMIN_LEGAJOS
+    if not autorizado:
         fatal("Solo un administrador autorizado puede registrar ingresos de mercadería "
               f"(legajo informado: {quien or 'ninguno'}).")
     return quien
@@ -518,11 +519,11 @@ def resetear_pin(wb, datos):
     admin = str(valor(datos, "admin_legajo", "")).strip()
     legajo = str(valor(datos, "legajo", "")).strip()
 
-    if admin not in ADMIN_PINES:
+    if not es_admin_en_wb(wb, admin):
         fatal(f"El legajo {admin or '(vacío)'} no está autorizado para restablecer PIN.")
     if not legajo:
         fatal("El restablecimiento de PIN no informa el legajo del empleado.")
-    if not puede_resetear(admin, legajo):
+    if admin in ADMIN_PINES and not puede_resetear(admin, legajo):
         fatal(
             f"El administrador {admin} ({ADMIN_PINES[admin]['nombre']}) no tiene alcance "
             f"para restablecer el PIN del legajo {legajo}."
@@ -553,6 +554,7 @@ def resetear_pin(wb, datos):
 # ----------------------------------------------------------------------
 ACCIONES_EMPLEADO = (
     "empleado_alta", "empleado_baja", "empleado_activar", "empleado_eliminar",
+    "empleado_admin_agregar", "empleado_admin_quitar",
 )
 
 
@@ -564,6 +566,57 @@ def legajo_valido(legajo):
     return bool(re.fullmatch(r"[0-9A-Za-z]{2,12}", legajo or ""))
 
 
+
+
+ADMIN_ROLE_HEADER = "ADMINISTRADOR"
+
+def indice_columna_admin(ws):
+    for c in range(1, ws.max_column + 1):
+        if str(ws.cell(1, c).value or "").strip().upper() == ADMIN_ROLE_HEADER:
+            return c
+    return None
+
+def es_admin_en_wb(wb, legajo):
+    legajo = str(legajo or "").strip()
+    if "Empleados" not in wb.sheetnames:
+        return legajo in ADMIN_LEGAJOS
+    ws = wb["Empleados"]
+    col = indice_columna_admin(ws)
+    if col is None:
+        return legajo in ADMIN_LEGAJOS  # compatibilidad inicial, antes de activar roles dinámicos
+    fila = fila_empleado(ws, legajo)
+    if fila is None:
+        return False
+    activo = str(fila[3].value or "SI").strip().upper()
+    rol = str(fila[col-1].value or "").strip().upper()
+    return activo not in ("NO", "FALSE", "0", "INACTIVO") and rol in ("SI", "SÍ", "ADMIN", "ADMINISTRADOR", "TRUE", "1")
+
+def asegurar_columna_admin(ws):
+    col = indice_columna_admin(ws)
+    if col is not None:
+        return col
+    col = ws.max_column + 1
+    ws.cell(1, col, ADMIN_ROLE_HEADER)
+    ws.cell(1, col)._style = ws.cell(1, max(1, col-1))._style
+    # Migración segura: conserva el administrador inicial como admin hasta que
+    # se retire expresamente después de promover a otra persona.
+    for legajo in ADMIN_LEGAJOS:
+        fila = fila_empleado(ws, legajo)
+        if fila is not None:
+            ws.cell(fila[0].row, col, "SI")
+    return col
+
+def admins_activos(wb):
+    if "Empleados" not in wb.sheetnames:
+        return list(ADMIN_LEGAJOS)
+    ws = wb["Empleados"]
+    col = indice_columna_admin(ws)
+    if col is None:
+        return [a for a in ADMIN_LEGAJOS if fila_empleado(ws, a) is not None]
+    return [str(ws.cell(r,1).value).strip() for r in range(2,ws.max_row+1)
+            if es_admin_en_wb(wb, str(ws.cell(r,1).value or "").strip())]
+
+
 def gestionar_empleado(wb, datos):
     accion = str(datos.get("accion", "")).strip().lower()
     admin = str(valor(datos, "admin_legajo", "")).strip()
@@ -571,7 +624,7 @@ def gestionar_empleado(wb, datos):
     nombre = str(valor(datos, "nombre", "")).strip().upper()
     fecha = valor(datos, "fecha", datetime.now().strftime("%Y-%m-%d %H:%M"))
 
-    if admin not in ADMIN_LEGAJOS:
+    if not es_admin_en_wb(wb, admin):
         fatal(f"El legajo {admin or '(vacío)'} no está autorizado para administrar legajos.")
     if not legajo_valido(legajo):
         fatal(f"Legajo inválido: {legajo!r} (se esperan entre 2 y 12 caracteres alfanuméricos).")
@@ -592,13 +645,32 @@ def gestionar_empleado(wb, datos):
                 fila[3].value = "SI"
             log(f"  Legajo {legajo} actualizado por {admin}: {anterior!r} → {nombre!r}")
 
+    elif accion in ("empleado_admin_agregar", "empleado_admin_quitar"):
+        if fila is None:
+            fatal(f"El legajo {legajo} no existe en la hoja Empleados.")
+        col = asegurar_columna_admin(ws)
+        activo = str(fila[3].value or "SI").strip().upper()
+        if accion == "empleado_admin_agregar":
+            if activo in ("NO", "FALSE", "0", "INACTIVO"):
+                fatal("No se puede promover a un empleado inactivo; reactivá el legajo primero.")
+            ws.cell(fila[0].row, col).value = "SI"
+        else:
+            actuales = admins_activos(wb)
+            if legajo not in actuales:
+                fatal(f"El legajo {legajo} no tiene rol de administrador.")
+            if len(actuales) <= 1:
+                fatal("No se puede quitar el último administrador activo. Promové a otra persona primero.")
+            ws.cell(fila[0].row, col).value = "NO"
+        nombre = str(fila[1].value or "").strip()
+        log(f"  Rol administrador {'asignado' if accion == 'empleado_admin_agregar' else 'quitado'}: {legajo} · {nombre} (por {admin})")
+
     elif accion in ("empleado_baja", "empleado_activar"):
         if fila is None:
             fatal(f"El legajo {legajo} no existe en la hoja Empleados.")
         if legajo == admin and accion == "empleado_baja":
             fatal("Un administrador no puede darse de baja a sí mismo.")
-        if legajo in ADMIN_LEGAJOS and accion == "empleado_baja":
-            fatal(f"El legajo {legajo} es administrador: no se puede dar de baja.")
+        if es_admin_en_wb(wb, legajo) and accion == "empleado_baja":
+            fatal(f"El legajo {legajo} es administrador: quitale primero el rol de administrador.")
         fila[3].value = "NO" if accion == "empleado_baja" else "SI"
         nombre = str(fila[1].value or "").strip()   # para que la auditoría lo registre
         log(f"  Legajo {legajo} → {'INACTIVO' if accion == 'empleado_baja' else 'ACTIVO'} (por {admin})")
@@ -606,8 +678,8 @@ def gestionar_empleado(wb, datos):
     elif accion == "empleado_eliminar":
         if fila is None:
             fatal(f"El legajo {legajo} no existe en la hoja Empleados.")
-        if legajo in ADMIN_LEGAJOS:
-            fatal(f"El legajo {legajo} es administrador: no se puede eliminar.")
+        if es_admin_en_wb(wb, legajo):
+            fatal(f"El legajo {legajo} es administrador: quitale primero el rol de administrador.")
         nombre = str(fila[1].value or "").strip()
         ws.delete_rows(fila[0].row, 1)
         log(f"  Legajo {legajo} · {nombre} eliminado por {admin}")
@@ -648,7 +720,7 @@ def main():
     if es_ingreso(datos):
         wb = load_workbook(ARCHIVO)
         validar_legajo(wb, datos)
-        validar_admin_ingreso(datos)
+        validar_admin_ingreso(datos, wb)
         items = validar_items_ingreso(datos)
         # El historial registra los nombres/cantidades ya normalizados.
         datos["items"] = items
