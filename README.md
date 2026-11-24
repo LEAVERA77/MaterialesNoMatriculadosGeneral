@@ -97,7 +97,7 @@ POST al Apps Script  ──►  GitHub Action  ──►  Excel actualizado (sto
 
 * El empleado ingresa su **legajo** y su **PIN personal**. Los legajos autorizados se administran
 desde el panel de administración (ver §8) y quedan en la hoja `Empleados`.
-* **PIN inicial = los últimos 4 dígitos del legajo** (ej.: legajo `10246` → PIN `0246`).
+* **El PIN no viene precargado**: cada persona lo crea en su primer ingreso (4 a 8 dígitos).
 * Tras 5 intentos fallidos el acceso se bloquea 60 segundos.
 * Los PIN se guardan como **hash SHA-256** en el código (nunca el número en texto).
 

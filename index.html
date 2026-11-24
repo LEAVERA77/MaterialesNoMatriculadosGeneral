@@ -443,7 +443,8 @@
             <div id="pasoLegajo">
                 <label for="legajoInput">Legajo</label>
                 <input type="text" id="legajoInput" inputmode="numeric" pattern="[0-9]*" maxlength="8"
-                       placeholder="12345" autocomplete="off" autocapitalize="off" spellcheck="false">
+                       placeholder="00000" autocomplete="off" autocapitalize="off" spellcheck="false"
+                       readonly>
                 <button type="submit" class="btn btn-primary" id="btnLegajo" style="justify-content:center; margin-top:0.9rem;">
                     <i class="fas fa-arrow-right"></i> <span id="btnLegajoText">Continuar</span>
                 </button>
@@ -1409,9 +1410,22 @@ const MATERIALES_RAW = [
             if (paso === 'crear') setTimeout(() => document.getElementById('pinNuevo').focus(), 80);
         }
 
+        // El navegador autocompletaba el legajo con el último valor usado.
+        // Con readonly hasta el foco, no ofrece ni pega valores guardados:
+        // el campo arranca siempre vacío y mostrando el ejemplo 00000.
+        function bloquearAutollenadoLegajo() {
+            if (!legajoInput) return;
+            legajoInput.value = '';
+            legajoInput.setAttribute('readonly', 'readonly');
+        }
+        legajoInput.addEventListener('focus', () => legajoInput.removeAttribute('readonly'));
+        legajoInput.addEventListener('blur', () => {
+            if (!legajoInput.value) legajoInput.setAttribute('readonly', 'readonly');
+        });
+
         function abrirLogin(mensaje) {
             loginError.textContent = mensaje || '';
-            legajoInput.value = '';
+            bloquearAutollenadoLegajo();
             pinInput.value = '';
             document.getElementById('pinNuevo').value = '';
             document.getElementById('pinNuevo2').value = '';
