@@ -909,6 +909,7 @@
             <div class="receipt" id="receiptContent"></div>
         </div>
         <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" id="shareReceiptBtn" style="display:none;"><i class="fas fa-file-pdf"></i> Compartir PDF</button>
             <button type="button" class="btn btn-primary" onclick="imprimirComprobante()"><i class="fas fa-print"></i> Imprimir Ticket</button>
         </div>
     </div>
@@ -2398,8 +2399,13 @@ const MATERIALES_RAW = [
             }
         }
 
+        let comprobanteActual = null;
+
         function mostrarComprobante(datos, operacion) {
             const fechaHora = new Date().toLocaleString('es-AR');
+            comprobanteActual = { datos: datos, operacion: String(operacion || '').toLowerCase(), fechaHora: fechaHora };
+            const shareBtn = document.getElementById('shareReceiptBtn');
+            shareBtn.style.display = comprobanteActual.operacion === 'ingreso' ? 'none' : 'inline-flex';
             let tablaHTML = '';
             
             const esIngreso = String(operacion).toLowerCase() === 'ingreso';
@@ -2445,6 +2451,109 @@ const MATERIALES_RAW = [
             
             receiptModal.style.display = 'flex';
         }
+
+        function pdfTextoSeguro(valor) {
+            return String(valor === undefined || valor === null ? '' : valor)
+                .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                .replace(/[^\x20-\x7E]/g, '?');
+        }
+
+        function escaparTextoPdf(texto) {
+            return pdfTextoSeguro(texto).replace(/\\/g, '\\\\').replace(/\(/g, '\\(').replace(/\)/g, '\\)');
+        }
+
+        function construirPdfComprobante(comprobante) {
+            const d = comprobante.datos;
+            const op = comprobante.operacion.toUpperCase() === 'DEVOLUCION' ? 'DEVOLUCION' : 'RETIRO';
+            const lineas = [
+                'ENERSA - COMPROBANTE DE ' + op,
+                'Fecha: ' + comprobante.fechaHora,
+                'Empleado: ' + d.usuario,
+                'Legajo: ' + d.legajo,
+                'Uso: ' + d.uso,
+                '',
+                'Material | Cantidad | Unidad'
+            ];
+            (d.items || []).forEach(item => {
+                lineas.push(String(item.material || '') + ' | ' + String(item.cantidad || '') + ' | ' + String(item.unidad || 'u.'));
+            });
+            lineas.push('', 'Firma responsable: ______________________________');
+            lineas.push('Comprobante generado automaticamente.');
+
+            const ajustadas = [];
+            lineas.forEach(linea => {
+                const text = pdfTextoSeguro(linea);
+                if (!text) { ajustadas.push(''); return; }
+                let restante = text;
+                while (restante.length > 88) {
+                    let corte = restante.lastIndexOf(' ', 88);
+                    if (corte < 20) corte = 88;
+                    ajustadas.push(restante.slice(0, corte));
+                    restante = restante.slice(corte).trim();
+                }
+                ajustadas.push(restante);
+            });
+
+            // El flujo admite varias páginas para comprobantes con muchas líneas.
+            const paginas = [];
+            for (let i = 0; i < ajustadas.length; i += 45) paginas.push(ajustadas.slice(i, i + 45));
+            const objetos = [];
+            objetos[1] = '<< /Type /Catalog /Pages 2 0 R >>';
+            objetos[2] = '<< /Type /Pages /Kids [' + paginas.map((_,i) => (3 + i*2) + ' 0 R').join(' ') + '] /Count ' + paginas.length + ' >>';
+            paginas.forEach((p, i) => {
+                const pageObj = 3 + i*2, streamObj = pageObj + 1;
+                objetos[pageObj] = '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >> >> >> /Contents ' + streamObj + ' 0 R >>';
+                let y = 790;
+                const commands = p.map((line, idx) => {
+                    const size = idx === 0 && i === 0 ? 16 : 10;
+                    const cmd = 'BT /F1 ' + size + ' Tf 48 ' + y + ' Td (' + escaparTextoPdf(line) + ') Tj ET';
+                    y -= idx === 0 && i === 0 ? 28 : 16;
+                    return cmd;
+                }).join('\n');
+                objetos[streamObj] = '<< /Length ' + commands.length + ' >>\nstream\n' + commands + '\nendstream';
+            });
+            const max = objetos.length - 1;
+            let pdf = '%PDF-1.4\n';
+            const offsets = [0];
+            for (let i = 1; i <= max; i++) { offsets[i] = pdf.length; pdf += i + ' 0 obj\n' + objetos[i] + '\nendobj\n'; }
+            const xref = pdf.length;
+            pdf += 'xref\n0 ' + (max + 1) + '\n0000000000 65535 f \n';
+            for (let i = 1; i <= max; i++) pdf += String(offsets[i]).padStart(10, '0') + ' 00000 n \n';
+            pdf += 'trailer\n<< /Size ' + (max + 1) + ' /Root 1 0 R >>\nstartxref\n' + xref + '\n%%EOF';
+            return new Blob([pdf], { type: 'application/pdf' });
+        }
+
+        async function compartirComprobantePdf() {
+            if (!comprobanteActual || !['retiro', 'devolucion'].includes(comprobanteActual.operacion)) {
+                showToast('El comprobante disponible no corresponde a un retiro o devolución confirmado.', true);
+                return;
+            }
+            const blob = construirPdfComprobante(comprobanteActual);
+            const fecha = new Date().toISOString().slice(0, 10);
+            const legajo = pdfTextoSeguro(comprobanteActual.datos.legajo).replace(/[^A-Za-z0-9_-]/g, '');
+            const nombre = 'comprobante-' + comprobanteActual.operacion + '-' + legajo + '-' + fecha + '.pdf';
+            const archivo = typeof File !== 'undefined' ? new File([blob], nombre, { type: 'application/pdf' }) : null;
+            try {
+                if (archivo && navigator.share && navigator.canShare && navigator.canShare({ files: [archivo] })) {
+                    await navigator.share({ files: [archivo], title: 'Comprobante ENERSA', text: 'Comprobante de ' + comprobanteActual.operacion });
+                    showToast('✅ Comprobante PDF compartido.');
+                } else {
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url; link.download = nombre; document.body.appendChild(link); link.click(); link.remove();
+                    setTimeout(() => URL.revokeObjectURL(url), 30000);
+                    showToast('✅ PDF descargado. Ya podés adjuntarlo para compartir.');
+                }
+            } catch (error) {
+                if (error && error.name === 'AbortError') return;
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url; link.download = nombre; document.body.appendChild(link); link.click(); link.remove();
+                setTimeout(() => URL.revokeObjectURL(url), 30000);
+                showToast('PDF descargado para compartir.', false);
+            }
+        }
+        document.getElementById('shareReceiptBtn').addEventListener('click', compartirComprobantePdf);
 
         window.imprimirComprobante = function() {
             const printArea = document.createElement('div');
