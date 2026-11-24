@@ -716,7 +716,7 @@
     <div class="button-bar">
         <div id="modeBadge" style="font-weight: 500; font-size: 0.85rem; color: var(--text-muted);">Identifíquese con su legajo</div>
         <div class="btn-group">
-            <button type="button" id="verStockBtn" class="btn btn-info" style="display:none;" title="Requiere contraseña"><i class="fas fa-lock" id="verStockIcon"></i> Ver Stock</button>
+            <button type="button" id="verStockBtn" class="btn btn-info" style="display:none;" title="Solo administradores"><i class="fas fa-lock" id="verStockIcon"></i> Ver Stock</button>
             <button type="button" id="ingresoBtn" class="btn btn-success" style="display:none;" title="Registrar mercadería que ingresa al depósito (solo administrador)"><i class="fas fa-dolly"></i> Ingreso de material</button>
             <button type="button" id="verHistorialBtn" class="btn btn-secondary" style="display:none;"><i class="fas fa-history"></i> Historial</button>
             <button type="button" id="retiroBtn" class="btn btn-primary" disabled><i class="fas fa-arrow-down"></i> Retirar</button>
@@ -778,28 +778,6 @@
             <button type="button" class="btn btn-success" onclick="exportarTablaExcel('stockTable', 'Reporte_de_Stock')"><i class="fas fa-file-excel"></i> Exportar</button>
             <button type="button" class="btn btn-secondary" onclick="imprimirTabla('stockTable')"><i class="fas fa-print"></i> Imprimir</button>
         </div>
-    </div>
-</div>
-
-<!-- Modal Contraseña Stock -->
-<div class="modal-overlay" id="stockPassModal" role="dialog" aria-modal="true" aria-labelledby="stockPassTitle">
-    <div class="modal-content" style="max-width: 420px;">
-        <div class="modal-header">
-            <h2 id="stockPassTitle"><i class="fas fa-lock"></i> Acceso al stock</h2>
-            <button type="button" id="closeStockPassBtn" aria-label="Cerrar"><i class="fas fa-times"></i></button>
-        </div>
-        <form class="pass-box" id="stockPassForm" autocomplete="off">
-            <p>Ingrese la contraseña para ver el stock.</p>
-            <div class="pass-field">
-                <input type="password" id="stockPassInput" placeholder="Contraseña" autocomplete="off" autocapitalize="off" spellcheck="false" aria-describedby="stockPassError">
-                <button type="button" class="pass-toggle" id="stockPassToggle" aria-label="Mostrar contraseña"><i class="fas fa-eye"></i></button>
-            </div>
-            <div class="pass-error" id="stockPassError" role="alert"></div>
-            <div style="display:flex; justify-content:flex-end; gap:0.75rem;">
-                <button type="button" class="btn btn-secondary" id="cancelStockPassBtn">Cancelar</button>
-                <button type="submit" class="btn btn-primary"><i class="fas fa-unlock"></i> Ingresar</button>
-            </div>
-        </form>
     </div>
 </div>
 
@@ -1862,7 +1840,6 @@ const MATERIALES_RAW = [
             verStockBtn.style.display = 'none';
             verHistorialBtn.style.display = 'none';
             stockModal.style.display = 'none';
-            stockPassModal.style.display = 'none';
             historyModal.style.display = 'none';
             bloquearStock();
             historyDataGlobal = [];
@@ -1887,7 +1864,6 @@ const MATERIALES_RAW = [
             verStockBtn.style.display = esAdministrador ? 'inline-flex' : 'none';
             verHistorialBtn.style.display = esAdministrador ? 'inline-flex' : 'none';
             if (!esAdministrador) {
-                stockModal.style.display = 'none'; stockPassModal.style.display = 'none';
                 historyModal.style.display = 'none'; bloquearStock();
                 historyDataGlobal = []; historyTableBody.innerHTML = '';
             }
@@ -3026,13 +3002,8 @@ const MATERIALES_RAW = [
         // ACCESO AL STOCK CON CONTRASEÑA
         // Se guarda solo el hash SHA-256 de la contraseña, no el texto.
         // ==========================================
-        const STOCK_PASS_HASH = 'f32b6dd6eb740f1a40fda4246fa894791bce920d038e687620928a568b836ccc';
         let stockDesbloqueado = false;
 
-        const stockPassModal = document.getElementById('stockPassModal');
-        const stockPassForm = document.getElementById('stockPassForm');
-        const stockPassInput = document.getElementById('stockPassInput');
-        const stockPassError = document.getElementById('stockPassError');
         const verStockIcon = document.getElementById('verStockIcon');
 
         // SHA-256 en JavaScript puro: funciona también al abrir el HTML como archivo local.
@@ -3071,24 +3042,17 @@ const MATERIALES_RAW = [
         }
 
         function actualizarIconoStock() {
-            verStockIcon.className = stockDesbloqueado ? 'fas fa-search' : 'fas fa-lock';
-            verStockBtn.title = stockDesbloqueado ? 'Ver stock' : 'Requiere contraseña';
+            verStockIcon.className = 'fas fa-boxes-stacked';
+            verStockBtn.title = 'Solo administradores';
         }
 
+        // El stock queda protegido por el rol de administrador, no por una
+        // contraseña compartida adicional. Los empleados no ven este acceso.
         function pedirContrasenaStock() {
             if (!sesion || !esAdmin(sesion.legajo)) { showToast('Solo los administradores pueden ver el stock.', true); return; }
-            if (stockDesbloqueado) { mostrarStock(); return; }
-            stockPassInput.value = '';
-            stockPassInput.type = 'password';
-            stockPassInput.classList.remove('invalid');
-            stockPassError.textContent = '';
-            stockPassModal.style.display = 'flex';
-            setTimeout(() => stockPassInput.focus(), 50);
-        }
-
-        function cerrarModalContrasena() {
-            stockPassModal.style.display = 'none';
-            verStockBtn.focus();
+            stockDesbloqueado = true;
+            actualizarIconoStock();
+            mostrarStock();
         }
 
         function bloquearStock() {
@@ -3100,33 +3064,7 @@ const MATERIALES_RAW = [
             showToast('🔒 Stock bloqueado.');
         }
 
-        stockPassForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            if (sha256(String(stockPassInput.value).trim()) === STOCK_PASS_HASH) {
-                stockDesbloqueado = true;
-                actualizarIconoStock();
-                stockPassModal.style.display = 'none';
-                mostrarStock();
-            } else {
-                stockPassError.textContent = 'Contraseña incorrecta.';
-                stockPassInput.classList.add('invalid', 'error-shake');
-                setTimeout(() => stockPassInput.classList.remove('error-shake'), 400);
-                stockPassInput.select();
-            }
-        });
-        stockPassInput.addEventListener('input', () => { stockPassError.textContent = ''; stockPassInput.classList.remove('invalid'); });
-        document.getElementById('stockPassToggle').addEventListener('click', function() {
-            const visible = stockPassInput.type === 'text';
-            stockPassInput.type = visible ? 'password' : 'text';
-            this.innerHTML = visible ? '<i class="fas fa-eye"></i>' : '<i class="fas fa-eye-slash"></i>';
-            this.setAttribute('aria-label', visible ? 'Mostrar contraseña' : 'Ocultar contraseña');
-            stockPassInput.focus();
-        });
-        document.getElementById('closeStockPassBtn').addEventListener('click', cerrarModalContrasena);
-        document.getElementById('cancelStockPassBtn').addEventListener('click', cerrarModalContrasena);
         document.getElementById('lockStockBtn').addEventListener('click', bloquearStock);
-        document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && stockPassModal.style.display === 'flex') cerrarModalContrasena(); });
-
         // Lee la hoja "Materiales" del Excel y devuelve la lista del stock.
         // La usan tanto la ventana de Stock como la de Ingreso.
         async function cargarStockData() {
@@ -3150,7 +3088,8 @@ const MATERIALES_RAW = [
 
         async function mostrarStock() {
             if (!sesion || !esAdmin(sesion.legajo)) { showToast('Solo los administradores pueden ver el stock.', true); return; }
-            if (!stockDesbloqueado) { pedirContrasenaStock(); return; }
+            stockDesbloqueado = true;
+            actualizarIconoStock();
             stockModal.style.display = 'flex';
             stockTableBody.innerHTML = '<tr><td colspan="4" style="text-align:center;"><i class="fas fa-circle-notch fa-spin"></i> Cargando...</td></tr>';
             stockSearchInput.value = '';

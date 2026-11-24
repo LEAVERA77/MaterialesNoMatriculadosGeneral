@@ -423,7 +423,7 @@ formulario completa solo la **unidad** desde el stock y normaliza el nombre.
 
 ## Permisos de visualización y operación
 
-* **Administradores activos:** pueden consultar Stock (se mantiene la contraseña existente), abrir Historial, registrar ingresos de materiales, retirar y devolver.
+* **Administradores activos:** pueden consultar Stock sin contraseña adicional, abrir Historial, registrar ingresos de materiales, retirar y devolver.
 * **Empleados:** solo pueden retirar y devolver. Los accesos a Stock e Historial y a la carga de ingresos se ocultan y sus funciones comprueban el rol de administrador. Al cerrar sesión se cierran esas ventanas y se limpia su contenido visible.
 
 **Límite de privacidad:** es un bloqueo de la interfaz de la aplicación, no una protección confidencial del archivo. El Excel se publica en un repositorio público y una persona con el enlace puede descargarlo directamente; un usuario técnico también puede inspeccionar recursos cargados por el navegador.
