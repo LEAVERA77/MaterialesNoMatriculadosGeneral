@@ -1190,16 +1190,67 @@ const MATERIALES_RAW = [
 "Grasera manual | Grasera manual 3kg con manguera y pico 1,5m | piezas",
         ];
 
-        const MATERIALES = MATERIALES_RAW.map(line => {
+        // Lista EMBEBIDA (respaldo): se usa sólo si todavía no se pudo leer el
+        // Excel. Queda como red de seguridad para que el buscador nunca esté vacío.
+        const MATERIALES_EMBEBIDOS = MATERIALES_RAW.map(line => {
             const parts = line.split('|').map(s => s.trim());
+            const unidad = parts[2] || 'u.';
             return { 
                 nombre: parts[0] || '—', 
                 especificacion: parts[1] || '', 
-                unidad: parts[2] || 'u.', 
-                display: `${parts[0]} ${parts[1] ? '· ' + parts[1] : ''} (${parts[2]})`,
-                searchString: `${parts[0]} ${parts[1]}`.toLowerCase()
+                unidad: unidad, 
+                display: `${parts[0]} ${parts[1] ? '· ' + parts[1] : ''} (${unidad})`,
+                // Claves de búsqueda sin acentos ni mayúsculas: "union" encuentra "Unión".
+                claveNombre: normalizarTexto(parts[0]),
+                searchString: normalizarTexto(`${parts[0]} ${parts[1]}`)
             };
         });
+
+        // Lista VIVA del buscador: se reemplaza por la hoja "Materiales" del Excel.
+        // Así el retiro ofrece TAMBIÉN los materiales que se dieron de alta desde
+        // la ventana de Ingreso de material (que no están en el código).
+        let MATERIALES = MATERIALES_EMBEBIDOS.slice();
+
+        // Convierte la lectura del stock al formato que usa el buscador.
+        function materialesDesdeStock(stock) {
+            return (stock || [])
+                .filter(m => m && String(m.nombre || '').trim())
+                .map(m => {
+                    const nombre = String(m.nombre).trim();
+                    const espec = String(m.especificacion || '').trim();
+                    const unidad = String(m.unidad || '').trim() || 'u.';
+                    return {
+                        nombre: nombre,
+                        especificacion: espec,
+                        unidad: unidad,
+                        display: `${nombre} ${espec ? '· ' + espec : ''} (${unidad})`,
+                        claveNombre: normalizarTexto(nombre),
+                        searchString: normalizarTexto(`${nombre} ${espec}`)
+                    };
+                })
+                .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es', { sensitivity: 'base' }));
+        }
+
+        // Aprovecha un stock ya leído (sin volver a descargar el Excel).
+        function usarStockComoMateriales(stock) {
+            const vivos = materialesDesdeStock(stock);
+            if (vivos.length > 0) { MATERIALES = vivos; }
+            return vivos.length;
+        }
+
+        // Lee el Excel y actualiza el buscador. Si falla, deja la lista embebida:
+        // es preferible una lista vieja que quedarse sin sugerencias.
+        async function actualizarMaterialesVivos(avisar) {
+            try {
+                const stock = await cargarStockData();
+                const total = usarStockComoMateriales(stock);
+                if (avisar && total > 0) showToast(`Buscador actualizado: ${total} materiales del stock (incluye los nuevos).`);
+                return total > 0;
+            } catch (e) {
+                if (avisar) showToast('No se pudo leer el stock: el buscador sigue con la lista guardada en el código.', true);
+                return false;
+            }
+        }
 
         // ==========================================
         // 3. HUELLA / ID DEL DISPOSITIVO
@@ -1330,17 +1381,23 @@ const MATERIALES_RAW = [
         }
 
         function buscarMateriales(query) {
-            if (!query || query.trim().length < 2) return [];
-            const q = query.toLowerCase().trim();
+            if (!query || String(query).trim().length < 2) return [];
+            // Sin acentos ni mayúsculas: escribir "union" encuentra "Unión".
+            const q = normalizarTexto(query);
             let resultados = MATERIALES.filter(m => m.searchString.includes(q));
             
             if (resultados.length === 0) {
+                // Tolerancia a errores de tipeo: se compara contra el nombre solo,
+                // recortado al largo escrito, para que la especificación larga no
+                // arruine la distancia ("sinnta aisladora" → "Cinta aisladora 3M").
                 const scored = MATERIALES.map(m => {
-                    const dist = levenshtein(q, m.searchString);
+                    const clave = m.claveNombre || m.searchString;
+                    const ventana = clave.slice(0, Math.min(clave.length, q.length + 2));
+                    const dist = Math.min(levenshtein(q, ventana), levenshtein(q, m.searchString));
                     return { material: m, score: dist };
                 });
                 scored.sort((a, b) => a.score - b.score);
-                resultados = scored.filter(s => s.score <= Math.max(3, Math.floor(q.length * 0.5))).map(s => s.material);
+                resultados = scored.filter(s => s.score <= Math.max(3, Math.ceil(q.length * 0.6))).map(s => s.material);
             }
             return resultados.slice(0, 10);
         }
@@ -2191,7 +2248,19 @@ const MATERIALES_RAW = [
                 const hiddenInput = row.querySelector('.material-hidden');
                 const qtyInput = row.querySelector('.qty-input');
                 const unitInput = row.querySelector('.unit-input');
-                const materialName = hiddenInput.value || materialInput.value.trim();
+                let materialName = hiddenInput.value || materialInput.value.trim();
+
+                // Si escribió el nombre completo sin tocar la sugerencia, se toma
+                // la unidad y el nombre tal como están en el stock (sirve sobre
+                // todo para los materiales nuevos, que no están en el código).
+                if (materialName && !unitInput.value) {
+                    const canonico = MATERIALES.find(m => normalizarTexto(m.nombre) === normalizarTexto(materialName));
+                    if (canonico) {
+                        unitInput.value = canonico.unidad;
+                        hiddenInput.value = canonico.nombre;
+                        materialName = canonico.nombre;
+                    }
+                }
 
                 if (!materialName) { materialInput.classList.add('error-shake'); setTimeout(() => materialInput.classList.remove('error-shake'), 400); valid = false; }
                 if (!qtyInput.value || parseFloat(qtyInput.value) <= 0) { qtyInput.classList.add('error-shake'); setTimeout(() => qtyInput.classList.remove('error-shake'), 400); valid = false; }
@@ -2435,6 +2504,7 @@ const MATERIALES_RAW = [
             ingresoMaterial.placeholder = 'Leyendo el stock...';
             try {
                 stockDataGlobal = await cargarStockData();
+                usarStockComoMateriales(stockDataGlobal);
                 ingresoStockListo = stockDataGlobal.length > 0;
                 showToast(`Stock leído: ${stockDataGlobal.length} materiales disponibles.`);
                 return ingresoStockListo;
@@ -2669,6 +2739,9 @@ const MATERIALES_RAW = [
                 ingresoRemito.value = '';
                 renderLineasIngreso();
                 ingresoStockListo = false;   // el stock cambió: se vuelve a leer al abrir
+                // Pasadas unas horas el Excel ya tiene los materiales nuevos: se
+                // refresca el buscador para que aparezcan al retirar.
+                setTimeout(() => { actualizarMaterialesVivos(); }, 90000);
                 ingresoModal.style.display = 'none';
             } catch (error) {
                 showToast(error.message, true);
@@ -3020,6 +3093,7 @@ const MATERIALES_RAW = [
             
             try {
                 stockDataGlobal = await cargarStockData();
+                usarStockComoMateriales(stockDataGlobal);
                 renderStockTable(stockDataGlobal);
                 marcaDeActualizacion(document.getElementById('stockUpdatedAt'));
             } catch (error) {
@@ -3225,6 +3299,10 @@ const MATERIALES_RAW = [
             const filtered = op ? historyDataGlobal.filter(item => String(item.operacion).toUpperCase() === op) : historyDataGlobal;
             renderHistoryTable(filtered);
         });
+
+        // Al abrir la página se intenta leer el stock para que el buscador del
+        // retiro ya incluya los materiales nuevos (si falla, queda la lista del código).
+        actualizarMaterialesVivos();
 
         resetBtn.addEventListener('click', () => {
             if(confirm('¿Seguro que desea limpiar el formulario?')) {

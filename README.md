@@ -391,3 +391,34 @@ Sólo hay que actualizar el repositorio (push) y esperar el deploy de GitHub Pag
 
 La ventana de **Historial** suma un selector **Todas las operaciones / Retiros / Devoluciones /
 Ingresos**, y los ingresos se muestran en verde para distinguirlos de un vistazo.
+
+---
+
+## 11. Buscador de materiales del retiro (lista viva)
+
+El campo **Material** del formulario de retiro sugiere a medida que se escribe. Antes esas
+sugerencias salían de una **lista fija escrita en el código** (`MATERIALES_RAW`, 138 materiales),
+así que todo lo que se daba de alta desde *Ingreso de material* **no aparecía** para retirar.
+
+Ahora el buscador usa la **hoja `Materiales` del Excel** (lista viva):
+
+* Al abrir la página se lee el stock en segundo plano y se reemplaza la lista del código.
+* También se refresca al abrir la ventana de **Stock**, al abrir la de **Ingreso** y ~90 s
+  después de registrar un ingreso (lo que tarda la Action en publicar el Excel).
+* Si el Excel no se puede leer (sin conexión, por ejemplo), **queda la lista del código**: el
+  buscador nunca se queda vacío. Una lista vieja es mejor que ninguna sugerencia.
+* Nunca se muestran cantidades en las sugerencias: el stock sigue detrás de su contraseña. Sólo
+  se ve **nombre · especificación (unidad)**.
+
+### Búsqueda tolerante
+
+| Lo que se escribe | Encuentra |
+|---|---|
+| `union cu` (sin acento) | Unión Cu estañado tubo 21mm UCC4 |
+| `bateria 9v` | Batería 9 V |
+| `sinnta aisladora` (error de tipeo) | Cinta aisladora … |
+
+La comparación ignora mayúsculas, acentos y espacios de más; si no hay coincidencias, se usa
+distancia de edición sobre el nombre (no sobre la especificación, que es larga y arruinaba el
+cálculo). Además, si se escribe el **nombre completo a mano** sin tocar la sugerencia, el
+formulario completa solo la **unidad** desde el stock y normaliza el nombre.
