@@ -1199,7 +1199,7 @@ const MATERIALES_RAW = [
                 nombre: parts[0] || '—', 
                 especificacion: parts[1] || '', 
                 unidad: unidad, 
-                display: `${parts[0]} ${parts[1] ? '· ' + parts[1] : ''} (${unidad})`,
+                display: `${parts[0]}${parts[1] ? ' · ' + parts[1] : ''} (${unidad})`,
                 // Claves de búsqueda sin acentos ni mayúsculas: "union" encuentra "Unión".
                 claveNombre: normalizarTexto(parts[0]),
                 searchString: normalizarTexto(`${parts[0]} ${parts[1]}`)
@@ -1223,7 +1223,7 @@ const MATERIALES_RAW = [
                         nombre: nombre,
                         especificacion: espec,
                         unidad: unidad,
-                        display: `${nombre} ${espec ? '· ' + espec : ''} (${unidad})`,
+                        display: `${nombre}${espec ? ' · ' + espec : ''} (${unidad})`,
                         claveNombre: normalizarTexto(nombre),
                         searchString: normalizarTexto(`${nombre} ${espec}`)
                     };
