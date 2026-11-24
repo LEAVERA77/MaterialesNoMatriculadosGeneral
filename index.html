@@ -248,6 +248,40 @@
         
         .modal-body { padding: 1.5rem; overflow-y: auto; flex: 1; }
 
+        /* ==========================================================
+           STOCK e HISTORIAL a pantalla completa.
+           Se aplica por ID para no afectar al resto de los modales.
+           ========================================================== */
+        #stockModal, #historyModal { padding: 0; align-items: stretch; }
+        #stockModal > .modal-content,
+        #historyModal > .modal-content {
+            max-width: 100%;
+            width: 100%;
+            max-height: 100%;
+            height: 100%;
+            height: 100dvh;              /* móvil: respeta la barra del navegador */
+            border-radius: 0;
+            box-shadow: none;
+        }
+        #stockModal .modal-header,
+        #historyModal .modal-header { padding: 1rem 1.5rem; }
+        #stockModal .modal-body,
+        #historyModal .modal-body { padding: 1rem 1.5rem 1.5rem; }
+        #stockModal .table-responsive,
+        #historyModal .table-responsive { max-height: none !important; }
+
+        @media print {
+            /* Al imprimir, la tabla vuelve a su alto natural */
+            #stockModal > .modal-content,
+            #historyModal > .modal-content { height: auto; max-height: none; width: 100%; }
+        }
+        @media (max-width: 640px) {
+            #stockModal .modal-body,
+            #historyModal .modal-body { padding: 0.5rem; }
+            #stockModal .modal-header,
+            #historyModal .modal-header { padding: 0.75rem 1rem; }
+        }
+
         /* Acceso protegido al stock */
         .pass-box { padding: 1.5rem; display: flex; flex-direction: column; gap: 0.75rem; }
         .pass-box p { margin: 0; color: var(--text-muted); font-size: 0.9rem; }
@@ -2328,7 +2362,7 @@ const MATERIALES_RAW = [
         // ACCESO AL STOCK CON CONTRASEÑA
         // Se guarda solo el hash SHA-256 de la contraseña, no el texto.
         // ==========================================
-        const STOCK_PASS_HASH = 'f8149d718d97cd29ab06903dcd48285278c41a6d16db9d4bec20f25d446c50a0';
+        const STOCK_PASS_HASH = 'f32b6dd6eb740f1a40fda4246fa894791bce920d038e687620928a568b836ccc';
         let stockDesbloqueado = false;
 
         const stockPassModal = document.getElementById('stockPassModal');
@@ -2403,7 +2437,7 @@ const MATERIALES_RAW = [
 
         stockPassForm.addEventListener('submit', (e) => {
             e.preventDefault();
-            if (sha256(stockPassInput.value) === STOCK_PASS_HASH) {
+            if (sha256(String(stockPassInput.value).trim()) === STOCK_PASS_HASH) {
                 stockDesbloqueado = true;
                 actualizarIconoStock();
                 stockPassModal.style.display = 'none';
