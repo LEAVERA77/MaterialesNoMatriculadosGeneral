@@ -716,9 +716,9 @@
     <div class="button-bar">
         <div id="modeBadge" style="font-weight: 500; font-size: 0.85rem; color: var(--text-muted);">Identifíquese con su legajo</div>
         <div class="btn-group">
-            <button type="button" id="verStockBtn" class="btn btn-info" title="Requiere contraseña"><i class="fas fa-lock" id="verStockIcon"></i> Ver Stock</button>
+            <button type="button" id="verStockBtn" class="btn btn-info" style="display:none;" title="Requiere contraseña"><i class="fas fa-lock" id="verStockIcon"></i> Ver Stock</button>
             <button type="button" id="ingresoBtn" class="btn btn-success" style="display:none;" title="Registrar mercadería que ingresa al depósito (solo administrador)"><i class="fas fa-dolly"></i> Ingreso de material</button>
-            <button type="button" id="verHistorialBtn" class="btn btn-secondary"><i class="fas fa-history"></i> Historial</button>
+            <button type="button" id="verHistorialBtn" class="btn btn-secondary" style="display:none;"><i class="fas fa-history"></i> Historial</button>
             <button type="button" id="retiroBtn" class="btn btn-primary" disabled><i class="fas fa-arrow-down"></i> Retirar</button>
             <button type="button" id="devolucionBtn" class="btn btn-warning" disabled><i class="fas fa-arrow-up"></i> Devolver</button>
             <button type="button" id="resetBtn" class="btn btn-secondary"><i class="fas fa-times"></i> Limpiar</button>
@@ -1859,6 +1859,14 @@ const MATERIALES_RAW = [
             devolucionBtn.disabled = true;
             document.getElementById('adminPinBtn').style.display = 'none';
             document.getElementById('ingresoBtn').style.display = 'none';
+            verStockBtn.style.display = 'none';
+            verHistorialBtn.style.display = 'none';
+            stockModal.style.display = 'none';
+            stockPassModal.style.display = 'none';
+            historyModal.style.display = 'none';
+            bloquearStock();
+            historyDataGlobal = [];
+            historyTableBody.innerHTML = '';
             modeBadge.textContent = 'Identifíquese con su legajo';
             modeBadge.style.color = 'var(--text-muted)';
             abrirLogin(mensaje);
@@ -1874,7 +1882,15 @@ const MATERIALES_RAW = [
             usuarioDisplay.value = `${sesion.nombre} — Leg. ${sesion.legajo}`;
             deviceChipText.textContent = `${DISPOSITIVO.id} · ${DISPOSITIVO.huellaCorta}`;
             document.getElementById('adminPinBtn').style.display = esAdmin(sesion.legajo) ? 'inline-flex' : 'none';
-            document.getElementById('ingresoBtn').style.display = esAdmin(sesion.legajo) ? 'inline-flex' : 'none';
+            const esAdministrador = esAdmin(sesion.legajo);
+            document.getElementById('ingresoBtn').style.display = esAdministrador ? 'inline-flex' : 'none';
+            verStockBtn.style.display = esAdministrador ? 'inline-flex' : 'none';
+            verHistorialBtn.style.display = esAdministrador ? 'inline-flex' : 'none';
+            if (!esAdministrador) {
+                stockModal.style.display = 'none'; stockPassModal.style.display = 'none';
+                historyModal.style.display = 'none'; bloquearStock();
+                historyDataGlobal = []; historyTableBody.innerHTML = '';
+            }
             aplicarBloqueoUI();
         }
 
@@ -3060,6 +3076,7 @@ const MATERIALES_RAW = [
         }
 
         function pedirContrasenaStock() {
+            if (!sesion || !esAdmin(sesion.legajo)) { showToast('Solo los administradores pueden ver el stock.', true); return; }
             if (stockDesbloqueado) { mostrarStock(); return; }
             stockPassInput.value = '';
             stockPassInput.type = 'password';
@@ -3132,6 +3149,7 @@ const MATERIALES_RAW = [
         }
 
         async function mostrarStock() {
+            if (!sesion || !esAdmin(sesion.legajo)) { showToast('Solo los administradores pueden ver el stock.', true); return; }
             if (!stockDesbloqueado) { pedirContrasenaStock(); return; }
             stockModal.style.display = 'flex';
             stockTableBody.innerHTML = '<tr><td colspan="4" style="text-align:center;"><i class="fas fa-circle-notch fa-spin"></i> Cargando...</td></tr>';
@@ -3159,6 +3177,7 @@ const MATERIALES_RAW = [
         }
 
         async function mostrarHistorial() {
+            if (!sesion || !esAdmin(sesion.legajo)) { showToast('Solo los administradores pueden ver el historial.', true); return; }
             historyModal.style.display = 'flex';
             historyTableBody.innerHTML = '<tr><td colspan="9" style="text-align:center;"><i class="fas fa-circle-notch fa-spin"></i> Cargando...</td></tr>';
             
@@ -3309,6 +3328,7 @@ const MATERIALES_RAW = [
 
         // Trae legajos/PIN administrados desde la hoja "Empleados" (si existe)
         cargaEmpleados = cargarEmpleadosDesdeExcel();
+        cargaEmpleados.then(() => { if (sesion) aplicarSesionUI(); });
 
         addItemBtn.addEventListener('click', () => {
             if (!sesion) { abrirLogin('Identifícate con tu legajo para operar.'); return; }
