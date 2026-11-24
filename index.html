@@ -282,6 +282,54 @@
             #historyModal .modal-header { padding: 0.75rem 1rem; }
         }
 
+        /* ==========================================================
+           INGRESO DE MATERIALES (solo administrador)
+           Permite sumar cantidades a materiales existentes y dar de
+           alta materiales nuevos. El que decide si un material es
+           nuevo o existente es el backend, no esta pantalla.
+           ========================================================== */
+        #ingresoModal > .modal-content { max-width: min(1080px, 96vw); max-height: 92vh; }
+        .ingreso-badge {
+            font-size: 0.68rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase;
+            color: #7c2d12; background: #ffedd5; border: 1px solid #fdba74;
+            padding: 0.25rem 0.55rem; border-radius: 999px; white-space: nowrap;
+        }
+        .ingreso-bloque { border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 1rem 1.1rem; margin-bottom: 1rem; background: var(--surface-color); }
+        .ingreso-bloque h3 { margin: 0 0 0.85rem; font-size: 0.92rem; color: var(--primary-color); display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+        .ingreso-buscador { position: relative; }
+        .ingreso-buscador input { width: 100%; padding: 0.7rem 0.9rem; border: 1px solid var(--border-color); border-radius: var(--radius-md); font-family: inherit; font-size: 0.95rem; box-sizing: border-box; }
+        .ingreso-buscador input:focus { outline: none; border-color: var(--accent-color); box-shadow: 0 0 0 3px rgba(15,157,118,0.15); }
+        #ingresoSugerencias { position: absolute; z-index: 30; left: 0; right: 0; top: calc(100% + 2px); background: var(--surface-color); border: 1px solid var(--border-color); border-radius: var(--radius-md); box-shadow: 0 12px 24px rgba(0,0,0,0.12); max-height: 260px; overflow-y: auto; display: none; }
+        #ingresoSugerencias .sug-item { padding: 0.55rem 0.8rem; cursor: pointer; border-bottom: 1px solid var(--border-color); font-size: 0.86rem; display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; }
+        #ingresoSugerencias .sug-item:last-child { border-bottom: none; }
+        #ingresoSugerencias .sug-item:hover, #ingresoSugerencias .sug-item.activo { background: var(--bg-color); }
+        #ingresoSugerencias .sug-stock { color: var(--text-muted); font-size: 0.76rem; white-space: nowrap; }
+        .ingreso-fila { display: grid; grid-template-columns: 1.5fr 0.8fr 0.8fr 1.4fr auto; gap: 0.6rem; align-items: end; margin-top: 0.75rem; }
+        .ingreso-fila label { display: block; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); margin-bottom: 0.25rem; }
+        .ingreso-fila input { width: 100%; padding: 0.55rem 0.7rem; border: 1px solid var(--border-color); border-radius: var(--radius-md); font-family: inherit; font-size: 0.9rem; box-sizing: border-box; }
+        .ingreso-fila input[readonly] { background: var(--bg-color); color: var(--text-muted); }
+        .ingreso-hint { margin: 0.6rem 0 0; font-size: 0.82rem; color: var(--text-muted); min-height: 1.2em; }
+        .ingreso-hint.existente { color: #047857; font-weight: 500; }
+        .ingreso-hint.nuevo { color: #b45309; font-weight: 500; }
+        #ingresoTabla td, #ingresoTabla th { padding: 0.55rem 0.7rem; }
+        #ingresoTabla .tabla-vacia { text-align: center; color: var(--text-muted); font-size: 0.88rem; }
+        .ingreso-tag { font-size: 0.64rem; font-weight: 700; text-transform: uppercase; padding: 0.1rem 0.4rem; border-radius: 999px; background: #ffedd5; color: #7c2d12; border: 1px solid #fdba74; margin-left: 0.4rem; white-space: nowrap; }
+        .ingreso-tag.suma { background: #ecfdf5; color: #047857; border-color: #a7f3d0; }
+        .ingreso-cierre { display: flex; flex-wrap: wrap; gap: 0.35rem 1.4rem; font-size: 0.82rem; color: var(--text-muted); margin-top: 0.75rem; }
+        .ingreso-cierre strong { color: var(--text-main); }
+        @media (max-width: 760px) {
+            .ingreso-fila { grid-template-columns: 1fr 1fr; }
+            .ingreso-fila .ancho-completo { grid-column: 1 / -1; }
+            #ingresoModal > .modal-content { max-height: 96vh; }
+        }
+        /* Comprobante de ingreso impreso */
+        .print-ingreso-marca { font-size: 0.72rem; letter-spacing: 0.09em; text-transform: uppercase; font-weight: 700; color: #000; }
+        .print-ingreso-titulo { font-size: 1.15rem; font-weight: 700; margin: 2px 0 6px; color: #000; }
+        .print-ingreso-datos { display: flex; flex-wrap: wrap; gap: 2px 18px; font-size: 0.74rem; color: #222; border-bottom: 2px solid #000; padding-bottom: 6px; margin-bottom: 10px; }
+        .print-firmas { display: flex; justify-content: space-between; gap: 2rem; margin-top: 30px; font-size: 0.8rem; }
+        .print-firmas div { flex: 1; border-top: 1px solid #000; padding-top: 4px; text-align: center; }
+        .print-nota { font-size: 0.68rem; color: #444; margin-top: 10px; }
+
         /* Acceso protegido al stock */
         .pass-box { padding: 1.5rem; display: flex; flex-direction: column; gap: 0.75rem; }
         .pass-box p { margin: 0; color: var(--text-muted); font-size: 0.9rem; }
@@ -305,6 +353,7 @@
         
         .row-retiro { font-weight: 500; color: var(--primary-color); }
         .row-devolucion { color: var(--text-muted); }
+        .row-ingreso { color: #047857; font-weight: 500; }
 
         .modal-footer { padding: 1.25rem 1.5rem; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; gap: 1rem; background: var(--bg-color); border-radius: 0 0 var(--radius-lg) var(--radius-lg); }
         
@@ -352,6 +401,8 @@
             .modal-body { overflow: visible; padding: 0; }
             .receipt { border: none; margin: 0; max-width: 100%; box-shadow: none; padding: 0; }
             @page { size: A4; margin: 1.5cm; }
+            #printArea table thead { display: table-header-group; }
+            #printArea table tr { break-inside: avoid; page-break-inside: avoid; }
         }
         /* ====== Identificación por legajo / huella de dispositivo ====== */
         .session-bar {
@@ -665,6 +716,7 @@
         <div id="modeBadge" style="font-weight: 500; font-size: 0.85rem; color: var(--text-muted);">Identifíquese con su legajo</div>
         <div class="btn-group">
             <button type="button" id="verStockBtn" class="btn btn-info" title="Requiere contraseña"><i class="fas fa-lock" id="verStockIcon"></i> Ver Stock</button>
+            <button type="button" id="ingresoBtn" class="btn btn-success" style="display:none;" title="Registrar mercadería que ingresa al depósito (solo administrador)"><i class="fas fa-dolly"></i> Ingreso de material</button>
             <button type="button" id="verHistorialBtn" class="btn btn-secondary"><i class="fas fa-history"></i> Historial</button>
             <button type="button" id="retiroBtn" class="btn btn-primary" disabled><i class="fas fa-arrow-down"></i> Retirar</button>
             <button type="button" id="devolucionBtn" class="btn btn-warning" disabled><i class="fas fa-arrow-up"></i> Devolver</button>
@@ -764,6 +816,12 @@
             <select id="filterUserSelect">
                 <option value="">Todos los usuarios</option>
             </select>
+            <select id="filterOpSelect" title="Filtrar por tipo de operación">
+                <option value="">Todas las operaciones</option>
+                <option value="RETIRO">Retiros</option>
+                <option value="DEVOLUCION">Devoluciones</option>
+                <option value="INGRESO">Ingresos</option>
+            </select>
             <span id="historyUpdatedAt" style="align-self:center; font-size:0.72rem; color:var(--text-muted); white-space:nowrap;"></span>
         </div>
         <div class="modal-body table-responsive" id="printAreaHistory">
@@ -787,6 +845,76 @@
         <div class="modal-footer">
             <button type="button" class="btn btn-success" onclick="exportarTablaExcel('historyTable', 'Historial_de_Movimientos')"><i class="fas fa-file-excel"></i> Exportar</button>
             <button type="button" class="btn btn-secondary" onclick="imprimirTabla('historyTable')"><i class="fas fa-print"></i> Imprimir</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Ingreso de Materiales (solo administrador) -->
+<div class="modal-overlay" id="ingresoModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2><i class="fas fa-dolly"></i> Ingreso de materiales</h2>
+            <div class="header-actions">
+                <span class="ingreso-badge">Solo administrador · <span id="ingresoAdminLegajo">—</span></span>
+                <button type="button" id="closeIngresoBtn" aria-label="Cerrar"><i class="fas fa-times"></i></button>
+            </div>
+        </div>
+        <div class="modal-search">
+            <input type="text" id="ingresoRemito" placeholder="Remito / factura / proveedor (opcional)" autocomplete="off">
+            <span id="ingresoFecha" style="align-self:center; font-size:0.72rem; color:var(--text-muted); white-space:nowrap;"></span>
+        </div>
+        <div class="modal-body">
+            <div class="ingreso-bloque">
+                <h3><i class="fas fa-search"></i> Agregar material</h3>
+                <div class="ingreso-buscador">
+                    <input type="text" id="ingresoMaterial" placeholder="Buscar en el stock o escribir un material nuevo..." autocomplete="off">
+                    <div id="ingresoSugerencias"></div>
+                </div>
+                <p class="ingreso-hint" id="ingresoHint"></p>
+                <button type="button" id="ingresoReintentarBtn" class="btn btn-secondary btn-sm" style="display:none;"><i class="fas fa-rotate-right"></i> Reintentar lectura del stock</button>
+                <div class="ingreso-fila">
+                    <div class="ancho-completo">
+                        <label for="ingresoCantidad">Cantidad que ingresa</label>
+                        <input type="number" id="ingresoCantidad" min="0.01" step="0.01" placeholder="0">
+                    </div>
+                    <div>
+                        <label for="ingresoUnidad">Unidad</label>
+                        <input type="text" id="ingresoUnidad" placeholder="u.">
+                    </div>
+                    <div class="ancho-completo" id="ingresoEspecWrap" style="display:none;">
+                        <label for="ingresoEspec">Especificación (material nuevo)</label>
+                        <input type="text" id="ingresoEspec" placeholder="Medida, marca, modelo...">
+                    </div>
+                    <div>
+                        <label>&nbsp;</label>
+                        <button type="button" id="ingresoAgregarBtn" class="btn btn-info"><i class="fas fa-plus"></i> Agregar</button>
+                    </div>
+                </div>
+            </div>
+            <div class="ingreso-bloque">
+                <h3><i class="fas fa-list"></i> Materiales de este ingreso <span id="ingresoContador" style="font-weight:400; color:var(--text-muted);"></span></h3>
+                <div class="table-responsive">
+                    <table class="table-stock" id="ingresoTabla">
+                        <thead>
+                            <tr>
+                                <th>Material</th>
+                                <th>Especificación</th>
+                                <th>Unidad</th>
+                                <th style="text-align:right;">Cant.</th>
+                                <th style="text-align:right;">Stock final</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="ingresoTablaBody"></tbody>
+                    </table>
+                </div>
+                <div class="ingreso-cierre" id="ingresoCierre"></div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" id="ingresoImprimirBtn"><i class="fas fa-print"></i> Imprimir</button>
+            <button type="button" class="btn btn-secondary" id="ingresoCancelarBtn">Cancelar</button>
+            <button type="button" class="btn btn-primary" id="ingresoRegistrarBtn"><i class="fas fa-save"></i> Registrar ingreso</button>
         </div>
     </div>
 </div>
@@ -935,6 +1063,7 @@
         const historyModal = document.getElementById('historyModal');
         const closeHistoryBtn = document.getElementById('closeHistoryBtn');
         const filterUserSelect = document.getElementById('filterUserSelect');
+        const filterOpSelect = document.getElementById('filterOpSelect');
         const historyTableBody = document.getElementById('historyTableBody');
 
         const receiptModal = document.getElementById('receiptModal');
@@ -1665,6 +1794,7 @@ const MATERIALES_RAW = [
             retiroBtn.disabled = true;
             devolucionBtn.disabled = true;
             document.getElementById('adminPinBtn').style.display = 'none';
+            document.getElementById('ingresoBtn').style.display = 'none';
             modeBadge.textContent = 'Identifíquese con su legajo';
             modeBadge.style.color = 'var(--text-muted)';
             abrirLogin(mensaje);
@@ -1680,6 +1810,7 @@ const MATERIALES_RAW = [
             usuarioDisplay.value = `${sesion.nombre} — Leg. ${sesion.legajo}`;
             deviceChipText.textContent = `${DISPOSITIVO.id} · ${DISPOSITIVO.huellaCorta}`;
             document.getElementById('adminPinBtn').style.display = esAdmin(sesion.legajo) ? 'inline-flex' : 'none';
+            document.getElementById('ingresoBtn').style.display = esAdmin(sesion.legajo) ? 'inline-flex' : 'none';
             aplicarBloqueoUI();
         }
 
@@ -2164,10 +2295,12 @@ const MATERIALES_RAW = [
             const fechaHora = new Date().toLocaleString('es-AR');
             let tablaHTML = '';
             
+            const esIngreso = String(operacion).toLowerCase() === 'ingreso';
+            const etiquetaUso = esIngreso ? 'Remito / proveedor' : 'Uso';
             datos.items.forEach(i => {
                 tablaHTML += `
                     <tr>
-                        <td>${i.material}</td>
+                        <td>${i.material}${i.esNuevo ? ' <span class="ingreso-tag">nuevo</span>' : ''}</td>
                         <td style="text-align: center;">${i.cantidad}</td>
                         <td>${i.unidad || 'u.'}</td>
                     </tr>
@@ -2179,8 +2312,8 @@ const MATERIALES_RAW = [
                 <p class="receipt-line"><span>Fecha:</span> <strong>${fechaHora}</strong></p>
                 <p class="receipt-line"><span>Empleado:</span> <strong>${datos.usuario}</strong></p>
                 <p class="receipt-line"><span>Legajo:</span> <strong>${datos.legajo}</strong></p>
-                <p class="receipt-line"><span>Operación:</span> <strong>${operacion.toUpperCase()}</strong></p>
-                <p class="receipt-line"><span>Uso:</span> <strong>${datos.uso}</strong></p>
+                <p class="receipt-line"><span>Operación:</span> <strong>${esIngreso ? 'INGRESO DE MERCADERÍA' : operacion.toUpperCase()}</strong></p>
+                <p class="receipt-line"><span>${etiquetaUso}:</span> <strong>${datos.uso}</strong></p>
                 <table class="receipt-table">
                     <thead>
                         <tr>
@@ -2214,6 +2347,402 @@ const MATERIALES_RAW = [
             window.print();
             setTimeout(() => { printArea.remove(); }, 1000);
         };
+
+        // ==========================================
+        // INGRESO DE MATERIALES (solo administrador)
+        // ------------------------------------------
+        // Sirve para las dos cosas: sumar cantidad a un material que ya está en
+        // la planilla o dar de alta uno nuevo. La pantalla propone, pero quien
+        // decide es el servidor: scripts/actualizar_stock.py busca el material
+        // (sin importar mayúsculas, acentos ni espacios de más) y, si no existe,
+        // lo agrega al final de la hoja "Materiales".
+        // Doble control de permisos:
+        //   - acá: el botón sólo aparece para los legajos de ADMIN_PINES (10246);
+        //   - en el servidor: se rechaza cualquier ingreso que no venga de un
+        //     legajo administrador (aunque alguien arme el pedido a mano).
+        // ==========================================
+        const ingresoModal = document.getElementById('ingresoModal');
+        const ingresoBtn = document.getElementById('ingresoBtn');
+        const ingresoMaterial = document.getElementById('ingresoMaterial');
+        const ingresoSugerencias = document.getElementById('ingresoSugerencias');
+        const ingresoHint = document.getElementById('ingresoHint');
+        const ingresoCantidad = document.getElementById('ingresoCantidad');
+        const ingresoUnidad = document.getElementById('ingresoUnidad');
+        const ingresoEspec = document.getElementById('ingresoEspec');
+        const ingresoEspecWrap = document.getElementById('ingresoEspecWrap');
+        const ingresoTablaBody = document.getElementById('ingresoTablaBody');
+        const ingresoContador = document.getElementById('ingresoContador');
+        const ingresoCierre = document.getElementById('ingresoCierre');
+        const ingresoRemito = document.getElementById('ingresoRemito');
+        const ingresoFecha = document.getElementById('ingresoFecha');
+        const ingresoRegistrarBtn = document.getElementById('ingresoRegistrarBtn');
+        const ingresoImprimirBtn = document.getElementById('ingresoImprimirBtn');
+        const ingresoReintentarBtn = document.getElementById('ingresoReintentarBtn');
+
+        let ingresoLineas = [];          // materiales cargados en esta ventana
+        let ingresoStockListo = false;   // ¿se pudo leer el stock del Excel?
+        let ingresoMaterialActual = null; // material del stock que coincide exacto
+
+        // Compara igual que el backend: sin mayúsculas, acentos ni espacios dobles.
+        function normalizarTexto(t) {
+            return String(t === undefined || t === null ? '' : t)
+                .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                .replace(/\s+/g, ' ').trim().toLowerCase();
+        }
+
+        function escaparHTML(t) {
+            return String(t === undefined || t === null ? '' : t)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+
+        function ingresoAutorizado() {
+            return !!sesion && esAdmin(sesion.legajo);
+        }
+
+        async function abrirIngreso() {
+            if (!ingresoAutorizado()) {
+                showToast('Sólo el administrador del sector puede registrar ingresos de material.', true);
+                return;
+            }
+            ingresoModal.style.display = 'flex';
+            document.getElementById('ingresoAdminLegajo').textContent = normalizarLegajo(sesion.legajo);
+            ingresoFecha.textContent = new Date().toLocaleString('es-AR');
+            ingresoLineas = [];
+            limpiarFormularioIngreso();
+            renderLineasIngreso();
+            await cargarStockParaIngreso();
+            ingresoMaterial.focus();
+        }
+
+        function limpiarFormularioIngreso() {
+            ingresoMaterial.value = '';
+            ingresoCantidad.value = '';
+            ingresoUnidad.value = '';
+            ingresoUnidad.readOnly = false;
+            ingresoEspec.value = '';
+            ingresoEspecWrap.style.display = 'none';
+            ingresoMaterialActual = null;
+            ingresoSugerencias.style.display = 'none';
+            ingresoHint.textContent = '';
+            ingresoHint.className = 'ingreso-hint';
+        }
+
+        // El stock se lee en vivo para poder decir "ya existe, suma" o "es nuevo".
+        async function cargarStockParaIngreso() {
+            ingresoReintentarBtn.style.display = 'none';
+            const marcador = ingresoMaterial.placeholder;
+            ingresoMaterial.placeholder = 'Leyendo el stock...';
+            try {
+                stockDataGlobal = await cargarStockData();
+                ingresoStockListo = stockDataGlobal.length > 0;
+                showToast(`Stock leído: ${stockDataGlobal.length} materiales disponibles.`);
+                return ingresoStockListo;
+            } catch (e) {
+                ingresoStockListo = false;
+                ingresoReintentarBtn.style.display = 'inline-flex';
+                showToast('No se pudo leer el stock. Podés reintentar; sin el stock no se permite dar de alta materiales (para no duplicarlos).', true);
+                return false;
+            } finally {
+                ingresoMaterial.placeholder = marcador;
+            }
+        }
+
+        function materialesDelStock(texto) {
+            const q = normalizarTexto(texto);
+            if (!q) return [];
+            const exactos = [];
+            const parciales = [];
+            stockDataGlobal.forEach(m => {
+                const n = normalizarTexto(m.nombre);
+                if (n === q) exactos.push(m);
+                else if (n.indexOf(q) >= 0) parciales.push(m);
+            });
+            return exactos.concat(parciales).slice(0, 8);
+        }
+
+        // Actualiza sugerencias, unidad y el mensaje "existe / es nuevo".
+        function evaluarMaterialIngreso() {
+            const texto = String(ingresoMaterial.value || '').trim();
+            const coincidencias = materialesDelStock(texto);
+            const exacto = coincidencias.find(m => normalizarTexto(m.nombre) === normalizarTexto(texto)) || null;
+            ingresoMaterialActual = exacto;
+
+            if (!texto || coincidencias.length === 0) {
+                ingresoSugerencias.style.display = 'none';
+            } else {
+                ingresoSugerencias.innerHTML = coincidencias.map(m => `
+                    <div class="sug-item" data-nombre="${escaparHTML(m.nombre)}">
+                        <span>${escaparHTML(m.nombre)}${m.especificacion ? ' · <em style="color:var(--text-muted)">' + escaparHTML(m.especificacion) + '</em>' : ''}</span>
+                        <span class="sug-stock">${m.cantidad} ${escaparHTML(m.unidad || 'u.')}</span>
+                    </div>`).join('');
+                ingresoSugerencias.style.display = 'block';
+                ingresoSugerencias.querySelectorAll('.sug-item').forEach(div => {
+                    div.addEventListener('mousedown', (ev) => {
+                        ev.preventDefault();
+                        ingresoMaterial.value = div.dataset.nombre;
+                        ingresoSugerencias.style.display = 'none';
+                        evaluarMaterialIngreso();
+                        ingresoCantidad.focus();
+                    });
+                });
+            }
+
+            if (!texto) {
+                ingresoUnidad.value = '';
+                ingresoUnidad.readOnly = false;
+                ingresoEspecWrap.style.display = 'none';
+                ingresoHint.textContent = '';
+                ingresoHint.className = 'ingreso-hint';
+                return;
+            }
+
+            const cantidad = parseFloat(String(ingresoCantidad.value).replace(',', '.')) || 0;
+            if (exacto) {
+                ingresoUnidad.value = exacto.unidad || 'u.';
+                ingresoUnidad.readOnly = true;
+                ingresoEspecWrap.style.display = 'none';
+                const enCarrito = ingresoLineas
+                    .filter(l => normalizarTexto(l.material) === normalizarTexto(exacto.nombre))
+                    .reduce((a, l) => a + l.cantidad, 0);
+                ingresoHint.className = 'ingreso-hint existente';
+                ingresoHint.textContent = `Material existente · stock actual ${exacto.cantidad} ${exacto.unidad || 'u.'}` +
+                    (cantidad > 0 ? ` → quedará ${exacto.cantidad + enCarrito + cantidad} ${exacto.unidad || 'u.'}` : '');
+            } else {
+                ingresoUnidad.readOnly = false;
+                ingresoEspecWrap.style.display = '';
+                ingresoHint.className = 'ingreso-hint nuevo';
+                ingresoHint.textContent = 'Material NUEVO: se agrega al final de la planilla. Revisá la especificación y la unidad.';
+            }
+        }
+
+        function agregarLineaIngreso() {
+            const nombre = String(ingresoMaterial.value || '').replace(/\s+/g, ' ').trim();
+            const cantidad = parseFloat(String(ingresoCantidad.value).replace(',', '.'));
+            const esNuevo = !ingresoMaterialActual;
+
+            if (nombre.length < 2) {
+                ingresoMaterial.classList.add('error-shake');
+                setTimeout(() => ingresoMaterial.classList.remove('error-shake'), 400);
+                showToast('Escribí el nombre del material.', true);
+                ingresoMaterial.focus();
+                return;
+            }
+            if (!(cantidad > 0)) {
+                ingresoCantidad.classList.add('error-shake');
+                setTimeout(() => ingresoCantidad.classList.remove('error-shake'), 400);
+                showToast('La cantidad que ingresa debe ser mayor que cero.', true);
+                ingresoCantidad.focus();
+                return;
+            }
+            if (esNuevo && !ingresoStockListo) {
+                showToast('No se pudo leer el stock: no se pueden dar de alta materiales nuevos ahora.', true);
+                return;
+            }
+            const unidad = esNuevo
+                ? String(ingresoUnidad.value || '').trim()
+                : (ingresoMaterialActual.unidad || 'u.');
+            if (!unidad) {
+                showToast('Indicá la unidad del material nuevo (kg, piezas, rollo...).', true);
+                ingresoUnidad.focus();
+                return;
+            }
+
+            const clave = normalizarTexto(nombre);
+            const yaEsta = ingresoLineas.find(l => normalizarTexto(l.material) === clave);
+            if (yaEsta) {
+                yaEsta.cantidad += cantidad;
+                showToast(`Se sumó a la línea de "${yaEsta.material}".`);
+            } else {
+                ingresoLineas.push({
+                    material: esNuevo ? nombre : ingresoMaterialActual.nombre,
+                    especificacion: esNuevo ? String(ingresoEspec.value || '').trim() : (ingresoMaterialActual.especificacion || ''),
+                    unidad: unidad,
+                    cantidad: cantidad,
+                    esNuevo: esNuevo,
+                    stockActual: esNuevo ? 0 : ingresoMaterialActual.cantidad
+                });
+            }
+            limpiarFormularioIngreso();
+            renderLineasIngreso();
+            ingresoMaterial.focus();
+        }
+
+        function renderLineasIngreso() {
+            if (ingresoLineas.length === 0) {
+                ingresoTablaBody.innerHTML = '<tr><td colspan="6" class="tabla-vacia">Todavía no agregaste materiales a este ingreso.</td></tr>';
+            } else {
+                ingresoTablaBody.innerHTML = ingresoLineas.map((l, i) => {
+                    const final = (l.stockActual || 0) + l.cantidad;
+                    return `<tr>
+                        <td>${escaparHTML(l.material)}<span class="ingreso-tag${l.esNuevo ? '' : ' suma'}">${l.esNuevo ? 'nuevo' : 'suma'}</span></td>
+                        <td>${l.especificacion ? escaparHTML(l.especificacion) : '—'}</td>
+                        <td>${escaparHTML(l.unidad)}</td>
+                        <td style="text-align:right; font-weight:600;">+${l.cantidad}</td>
+                        <td style="text-align:right;">${l.esNuevo ? l.cantidad : final}</td>
+                        <td style="text-align:right;"><button type="button" class="btn-icon" data-borrar="${i}" title="Quitar del ingreso"><i class="fas fa-trash"></i></button></td>
+                    </tr>`;
+                }).join('');
+                ingresoTablaBody.querySelectorAll('[data-borrar]').forEach(b => {
+                    b.addEventListener('click', () => {
+                        ingresoLineas.splice(Number(b.dataset.borrar), 1);
+                        renderLineasIngreso();
+                    });
+                });
+            }
+
+            ingresoContador.textContent = ingresoLineas.length
+                ? `(${ingresoLineas.length} línea${ingresoLineas.length === 1 ? '' : 's'})` : '';
+            const nuevos = ingresoLineas.filter(l => l.esNuevo).length;
+            ingresoCierre.innerHTML = ingresoLineas.length
+                ? `<span>Materiales: <strong>${ingresoLineas.length}</strong></span>
+                   <span>A sumar en el stock: <strong>${ingresoLineas.length - nuevos}</strong></span>
+                   <span>Altas nuevas: <strong>${nuevos}</strong></span>`
+                : '';
+            ingresoRegistrarBtn.disabled = ingresoLineas.length === 0;
+            ingresoImprimirBtn.disabled = ingresoLineas.length === 0;
+        }
+
+        async function registrarIngreso() {
+            if (!ingresoAutorizado()) {
+                showToast('Sólo el administrador del sector puede registrar ingresos.', true);
+                return;
+            }
+            if (ingresoLineas.length === 0) {
+                showToast('Agregá al menos un material al ingreso.', true);
+                return;
+            }
+            if (!ingresoStockListo) {
+                showToast('No se pudo leer el stock: reintentá la lectura antes de registrar (así no se duplican materiales).', true);
+                return;
+            }
+            if (!BACKEND_CONFIGURADO) { avisarBackendNoConfigurado(); return; }
+
+            const remito = String(ingresoRemito.value || '').trim();
+            const items = ingresoLineas.map(l => ({
+                material: l.material,
+                especificacion: l.especificacion,
+                unidad: l.unidad,
+                cantidad: l.cantidad,
+                esNuevo: !!l.esNuevo
+            }));
+            const ahora = new Date();
+            const datos = {
+                fecha: ahora.toISOString().split('T')[0] + ' ' + ahora.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }),
+                usuario: sesion.nombre,
+                legajo: sesion.legajo,
+                uso: remito || 'Ingreso de mercadería',
+                items: items
+            };
+
+            loader.style.display = 'block';
+            ingresoRegistrarBtn.disabled = true;
+            try {
+                const res = await fetch(urlGoogle, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: JSON.stringify({
+                        accion: 'ingreso',
+                        operacion: 'ingreso',
+                        fecha: datos.fecha,
+                        usuario: datos.usuario,
+                        legajo: datos.legajo,
+                        admin_legajo: sesion.legajo,
+                        uso: datos.uso,
+                        items: items,
+                        dispositivo: datosDispositivo(),
+                        origen: location.origin + location.pathname
+                    })
+                });
+                if (!res.ok) throw new Error('Error al conectar con el servidor.');
+
+                const respuesta = await leerRespuestaBackend(res);
+                if (respuesta.ok === false) {
+                    throw new Error('El servidor no registró el ingreso: ' + (respuesta.motivo || 'error desconocido'));
+                }
+
+                showToast('✅ Ingreso enviado. Verificando el registro en el Excel...');
+                mostrarComprobante(datos, 'ingreso');
+                confirmarRegistro(datos, 'ingreso');
+
+                ingresoLineas = [];
+                ingresoRemito.value = '';
+                renderLineasIngreso();
+                ingresoStockListo = false;   // el stock cambió: se vuelve a leer al abrir
+                ingresoModal.style.display = 'none';
+            } catch (error) {
+                showToast(error.message, true);
+                ingresoRegistrarBtn.disabled = false;
+            } finally {
+                loader.style.display = 'none';
+            }
+        }
+
+        // Remito de ingreso para imprimir (antes de registrar sirve para
+        // controlar contra lo que entrega el proveedor).
+        function imprimirIngreso() {
+            if (ingresoLineas.length === 0) {
+                showToast('No hay materiales para imprimir.', true);
+                return;
+            }
+            const ahora = new Date();
+            const remito = String(ingresoRemito.value || '').trim() || '—';
+            const filas = ingresoLineas.map(l => `
+                <tr>
+                    <td>${escaparHTML(l.material)}${l.esNuevo ? ' (nuevo)' : ''}</td>
+                    <td>${l.especificacion ? escaparHTML(l.especificacion) : '—'}</td>
+                    <td>${escaparHTML(l.unidad)}</td>
+                    <td style="text-align:right;">${l.cantidad}</td>
+                </tr>`).join('');
+
+            const printArea = document.createElement('div');
+            printArea.id = 'printArea';
+            printArea.innerHTML = `
+                <div class="print-ingreso-marca">ENERSA · Sector General · Depósito</div>
+                <div class="print-ingreso-titulo">Ingreso de materiales</div>
+                <div class="print-ingreso-datos">
+                    <span><strong>Fecha:</strong> ${ahora.toLocaleString('es-AR')}</span>
+                    <span><strong>Remito / proveedor:</strong> ${escaparHTML(remito)}</span>
+                    <span><strong>Operador:</strong> ${escaparHTML(sesion ? sesion.nombre : '')} (Leg. ${escaparHTML(sesion ? sesion.legajo : '')})</span>
+                    <span><strong>Líneas:</strong> ${ingresoLineas.length}</span>
+                </div>
+                <table class="table-stock">
+                    <thead>
+                        <tr>
+                            <th>Material</th>
+                            <th>Especificación</th>
+                            <th>Unidad</th>
+                            <th style="text-align:right;">Cantidad</th>
+                        </tr>
+                    </thead>
+                    <tbody>${filas}</tbody>
+                </table>
+                <div class="print-firmas">
+                    <div>Entregó / Transportó</div>
+                    <div>Recibió (Depósito)</div>
+                </div>
+                <p class="print-nota">Dispositivo: ${escaparHTML(DISPOSITIVO.id)} · Huella ${escaparHTML(DISPOSITIVO.huellaCorta)} · Documento generado automáticamente desde la app de materiales.</p>
+            `;
+            document.body.appendChild(printArea);
+            window.print();
+            setTimeout(() => { printArea.remove(); }, 1000);
+        }
+
+        ingresoBtn.addEventListener('click', abrirIngreso);
+        document.getElementById('closeIngresoBtn').addEventListener('click', () => { ingresoModal.style.display = 'none'; });
+        document.getElementById('ingresoCancelarBtn').addEventListener('click', () => { ingresoModal.style.display = 'none'; });
+        document.getElementById('ingresoAgregarBtn').addEventListener('click', agregarLineaIngreso);
+        ingresoRegistrarBtn.addEventListener('click', registrarIngreso);
+        ingresoImprimirBtn.addEventListener('click', imprimirIngreso);
+        ingresoReintentarBtn.addEventListener('click', cargarStockParaIngreso);
+        ingresoMaterial.addEventListener('input', evaluarMaterialIngreso);
+        ingresoMaterial.addEventListener('focus', evaluarMaterialIngreso);
+        ingresoMaterial.addEventListener('blur', () => setTimeout(() => { ingresoSugerencias.style.display = 'none'; }, 150));
+        ingresoMaterial.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); ingresoCantidad.focus(); } });
+        ingresoCantidad.addEventListener('input', evaluarMaterialIngreso);
+        ingresoCantidad.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); agregarLineaIngreso(); } });
+        ingresoRemito.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); ingresoMaterial.focus(); } });
+        document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && ingresoModal.style.display === 'flex') ingresoModal.style.display = 'none'; });
 
         // El Apps Script responde siempre HTTP 200 (incluso si falló el dispatch),
         // así que hay que interpretar el cuerpo para no reportar un falso éxito.
@@ -2462,6 +2991,27 @@ const MATERIALES_RAW = [
         document.getElementById('lockStockBtn').addEventListener('click', bloquearStock);
         document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && stockPassModal.style.display === 'flex') cerrarModalContrasena(); });
 
+        // Lee la hoja "Materiales" del Excel y devuelve la lista del stock.
+        // La usan tanto la ventana de Stock como la de Ingreso.
+        async function cargarStockData() {
+            const { workbook } = await downloadAndParseExcel();
+            const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+            const json = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+            const datos = [];
+            for (let i = 2; i < json.length; i++) {
+                const row = json[i];
+                if (row && row[0]) {
+                    datos.push({
+                        nombre: row[0] || '',
+                        especificacion: row[1] || '',
+                        unidad: row[2] || '',
+                        cantidad: row[3] !== undefined ? parseFloat(row[3]) : 0
+                    });
+                }
+            }
+            return datos;
+        }
+
         async function mostrarStock() {
             if (!stockDesbloqueado) { pedirContrasenaStock(); return; }
             stockModal.style.display = 'flex';
@@ -2469,22 +3019,7 @@ const MATERIALES_RAW = [
             stockSearchInput.value = '';
             
             try {
-                const { workbook } = await downloadAndParseExcel();
-                const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-                const json = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-                
-                stockDataGlobal = [];
-                for (let i = 2; i < json.length; i++) {
-                    const row = json[i];
-                    if (row && row[0]) {
-                        stockDataGlobal.push({
-                            nombre: row[0] || '',
-                            especificacion: row[1] || '',
-                            unidad: row[2] || '',
-                            cantidad: row[3] !== undefined ? parseFloat(row[3]) : 0
-                        });
-                    }
-                }
+                stockDataGlobal = await cargarStockData();
                 renderStockTable(stockDataGlobal);
                 marcaDeActualizacion(document.getElementById('stockUpdatedAt'));
             } catch (error) {
@@ -2556,8 +3091,10 @@ const MATERIALES_RAW = [
             const reversedData = [...data].reverse();
             
             historyTableBody.innerHTML = reversedData.map(item => {
-                let rowClass = item.operacion === 'RETIRO' ? 'row-retiro' : 'row-devolucion';
-                let colorOp = item.operacion === 'RETIRO' ? 'var(--danger-color)' : 'var(--success-color)';
+                let rowClass = item.operacion === 'RETIRO' ? 'row-retiro'
+                    : (item.operacion === 'INGRESO' ? 'row-ingreso' : 'row-devolucion');
+                let colorOp = item.operacion === 'RETIRO' ? 'var(--danger-color)'
+                    : (item.operacion === 'INGRESO' ? '#047857' : 'var(--success-color)');
                 
                 let botonAccion = '';
                 if (item.operacion === 'RETIRO') {
@@ -2680,6 +3217,12 @@ const MATERIALES_RAW = [
             const user = e.target.value;
             if (!user) { renderHistoryTable(historyDataGlobal); return; }
             const filtered = historyDataGlobal.filter(item => item.usuario === user);
+            renderHistoryTable(filtered);
+        });
+
+        filterOpSelect.addEventListener('change', (e) => {
+            const op = String(e.target.value || '').toUpperCase();
+            const filtered = op ? historyDataGlobal.filter(item => String(item.operacion).toUpperCase() === op) : historyDataGlobal;
             renderHistoryTable(filtered);
         });
 

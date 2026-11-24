@@ -27,6 +27,11 @@ Acciones de PIN (llegan con "accion" en el payload):
 Acciones de legajos (solo administradores de ADMIN_PINES):
     empleado_alta | empleado_baja | empleado_activar | empleado_eliminar
 
+Ingreso de mercadería (accion/operacion = "ingreso", SOLO administradores):
+    Suma cantidades a los materiales existentes y da de alta los materiales
+    nuevos al final de la hoja "Materiales". Deja constancia en "Historial"
+    con la Operacion "INGRESO" y el remito/proveedor en la columna "Uso".
+
 Hoja "Pines" (auditoría de altas y restablecimientos):
     A Fecha | B Accion | C Legajo | D Empleado | E Admin | F Dispositivo | G Huella | H Hash (8)
 """
@@ -35,6 +40,8 @@ import json
 import os
 import re
 import sys
+import unicodedata
+from copy import copy
 from datetime import datetime
 
 from openpyxl import load_workbook
@@ -196,6 +203,144 @@ def aplicar_movimientos(ws, datos):
             log(f"  {operacion}: {item.get('material')} x {cantidad}")
         else:
             log(f"  Aviso: no se encontró en el stock: {item.get('material')}")
+
+
+
+# ==========================================================
+# INGRESO DE MERCADERÍA (solo administradores)
+# ==========================================================
+# La operación "ingreso" es la única que puede AGREGAR materiales nuevos a la
+# planilla y la única que suma cantidades. Por eso exige un administrador de
+# ADMIN_PINES, igual que la gestión de legajos.
+MAX_LINEAS_INGRESO = 50
+MAX_NOMBRE_INGRESO = 120
+MAX_CANTIDAD_INGRESO = 1_000_000
+
+
+def es_ingreso(datos):
+    return (str(datos.get("accion", "")).strip().lower() == "ingreso" or
+            str(datos.get("operacion", "")).strip().lower() == "ingreso")
+
+
+def validar_admin_ingreso(datos):
+    """Solo un legajo de ADMIN_PINES puede cargar mercadería.
+
+    Se exige que el legajo que opera (el de la sesión) sea administrador. Si
+    además llega admin_legajo, tiene que coincidir: así nadie puede enviar un
+    legajo común declarando el de otro para saltear el control.
+    """
+    actor = str(datos.get("legajo") or "").strip()
+    admin = str(datos.get("admin_legajo") or "").strip()
+    if admin and actor and admin != actor:
+        fatal("Payload inconsistente: el legajo que opera no coincide con el "
+              "administrador informado. No se registró nada.")
+    quien = actor or admin
+    if quien not in ADMIN_LEGAJOS:
+        fatal("Solo un administrador autorizado puede registrar ingresos de mercadería "
+              f"(legajo informado: {quien or 'ninguno'}).")
+    return quien
+
+
+def normalizar_material(nombre):
+    """Clave de comparación tolerante: sin mayúsculas, acentos ni espacios de más.
+    Evita que "Alambre  de Fardo" cree un material duplicado."""
+    s = unicodedata.normalize("NFKD", str(nombre or ""))
+    s = "".join(c for c in s if not unicodedata.combining(c))
+    return re.sub(r"\s+", " ", s).strip().lower()
+
+
+def validar_items_ingreso(datos):
+    """Normaliza y valida las líneas ANTES de tocar el Excel: si algo está mal,
+    no se escribe nada (todo o nada)."""
+    items = datos.get("items") or []
+    if not items:
+        fatal("El ingreso no tiene materiales.")
+    if len(items) > MAX_LINEAS_INGRESO:
+        fatal(f"El ingreso tiene {len(items)} líneas y el máximo es {MAX_LINEAS_INGRESO}.")
+
+    limpios = []
+    for n, item in enumerate(items, start=1):
+        if not isinstance(item, dict):
+            fatal(f"Línea {n}: formato inválido.")
+        nombre = " ".join(str(item.get("material", "")).split())
+        if len(nombre) < 2:
+            fatal(f"Línea {n}: falta la descripción del material.")
+        if len(nombre) > MAX_NOMBRE_INGRESO:
+            fatal(f"Línea {n}: la descripción supera los {MAX_NOMBRE_INGRESO} caracteres.")
+        try:
+            cantidad = float(str(item.get("cantidad", "")).replace(",", "."))
+        except (TypeError, ValueError):
+            fatal(f"Línea {n}: la cantidad no es un número válido.")
+        if cantidad <= 0:
+            fatal(f"Línea {n}: la cantidad debe ser mayor que cero.")
+        if cantidad > MAX_CANTIDAD_INGRESO:
+            fatal(f"Línea {n}: la cantidad supera el máximo permitido ({MAX_CANTIDAD_INGRESO}).")
+
+        limpios.append({
+            "material": nombre,
+            "especificacion": " ".join(str(item.get("especificacion", "") or "").split()),
+            "unidad": str(item.get("unidad", "") or "").strip() or "u.",
+            "cantidad": cantidad,
+        })
+    return limpios
+
+
+def hoja_materiales(wb):
+    return wb["Materiales"] if "Materiales" in wb.sheetnames else wb.worksheets[0]
+
+
+def indice_materiales(ws):
+    """{clave normalizada: fila} para ubicar cada material una sola vez."""
+    indice = {}
+    for fila in range(3, ws.max_row + 1):
+        valor_a = ws.cell(row=fila, column=1).value
+        clave = normalizar_material(valor_a)
+        if clave and clave not in indice:
+            indice[clave] = fila
+    return indice
+
+
+def copiar_formato_fila(ws, fila_origen, fila_destino):
+    """La fila nueva hereda el formato de la última fila cargada (bordes,
+    alineación, tipo de letra y formato de número)."""
+    for columna in range(1, 5):
+        origen = ws.cell(row=fila_origen, column=columna)
+        destino = ws.cell(row=fila_destino, column=columna)
+        if origen.has_style:
+            destino._style = copy(origen._style)
+
+
+def aplicar_ingresos(wb, items):
+    ws = hoja_materiales(wb)
+    indice = indice_materiales(ws)
+    ultima_fila_datos = ws.max_row
+
+    sumados = 0
+    nuevos = 0
+    for item in items:
+        clave = normalizar_material(item["material"])
+        if clave in indice:
+            celda = ws.cell(row=indice[clave], column=4)
+            anterior = float(celda.value) if celda.value not in (None, "") else 0.0
+            celda.value = anterior + item["cantidad"]
+            sumados += 1
+            log(f"  ingreso: {item['material']} +{item['cantidad']:g} → {celda.value:g} "
+                f"(antes {anterior:g})")
+            continue
+
+        # Material nuevo: se agrega al final de la planilla.
+        fila = ws.max_row + 1
+        ws.cell(row=fila, column=1, value=item["material"])
+        ws.cell(row=fila, column=2, value=item["especificacion"] or None)
+        ws.cell(row=fila, column=3, value=item["unidad"])
+        ws.cell(row=fila, column=4, value=item["cantidad"])
+        copiar_formato_fila(ws, ultima_fila_datos, fila)
+        indice[clave] = fila
+        ultima_fila_datos = fila
+        nuevos += 1
+        log(f"  ingreso: NUEVO {item['material']} · {item['unidad']} · {item['cantidad']:g}")
+
+    return {"nuevos": nuevos, "sumados": sumados, "total": len(items)}
 
 
 def obtener_historial(wb):
@@ -499,8 +644,25 @@ def main():
         log("Archivo Excel guardado exitosamente (acción de PIN).")
         return
 
+    # --- Ingreso de mercadería (solo administradores; suma o da de alta) ---
+    if es_ingreso(datos):
+        wb = load_workbook(ARCHIVO)
+        validar_legajo(wb, datos)
+        validar_admin_ingreso(datos)
+        items = validar_items_ingreso(datos)
+        # El historial registra los nombres/cantidades ya normalizados.
+        datos["items"] = items
+        resumen = aplicar_ingresos(wb, items)
+        registrar_historial(wb, datos)
+        registrar_dispositivo(wb, datos)
+        wb.save(ARCHIVO)
+        log(f"Ingreso aplicado: {resumen['sumados']} material(es) sumado(s), "
+            f"{resumen['nuevos']} material(es) nuevo(s), {resumen['total']} línea(s).")
+        log("Archivo Excel guardado exitosamente (ingreso de mercadería).")
+        return
+
     if str(datos.get("operacion", "")).lower() not in ("retiro", "devolucion"):
-        fatal("Operación inválida (se esperaba 'retiro' o 'devolucion').")
+        fatal("Operación inválida (se esperaba 'retiro', 'devolucion' o 'ingreso').")
     if not datos.get("items"):
         fatal("La operación no tiene materiales.")
 
